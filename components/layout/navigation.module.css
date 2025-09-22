@@ -1,0 +1,100 @@
+/* 
+  Navigation styling for Write2Learn application
+  Following guidelines in nav.md
+*/
+
+/* 
+  Common styles for navigation items, ensuring 
+  touch-friendly size and consistent appearance
+*/
+.navItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  transition: all 0.2s ease-in-out;
+  min-width: 3rem; /* 48px - touch friendly */
+  min-height: 3rem; /* 48px - touch friendly */
+  touch-action: manipulation; /* Improves touch behavior */
+}
+
+.navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.navLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+/* Active state styling */
+.active {
+  color: var(--color-primary);
+  background-color: var(--color-primary-light);
+}
+
+.inactive {
+  color: var(--color-gray-600);
+}
+
+.inactive:hover {
+  color: var(--color-primary);
+  background-color: var(--color-gray-50);
+}
+
+/* Desktop sidebar specific styles */
+.desktopSidebar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  border-right: 1px solid var(--color-gray-200);
+  background-color: white;
+  transition: width 0.3s ease-in-out;
+}
+
+.desktopSidebar.expanded {
+  width: 16rem;
+}
+
+.desktopSidebar.collapsed {
+  width: 4.5rem;
+}
+
+/* Mobile bottom navigation */
+.mobileNav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border-top: 1px solid var(--color-gray-200);
+  padding: 0.25rem 0;
+}
+
+/* Container for navigation items */
+.navItemsContainer {
+  display: flex;
+  width: 100%;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Mobile layout for nav items container */
+.navItemsContainer.mobile {
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+/* Desktop layout for nav items container */
+.navItemsContainer.desktop {
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 1rem;
+}

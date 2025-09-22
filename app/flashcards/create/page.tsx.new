@@ -1,0 +1,28 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { BreathingLoader } from '@/components/ui/breathing-loader';
+
+export default function FlashcardsCreatePage() {
+  const router = useRouter();
+  
+  useEffect(() => {
+    // Get vocab data from localStorage if it exists
+    const vocabData = localStorage.getItem('flashcardData');
+    if (vocabData) {
+      // Transfer it to the new key for vocab hub
+      localStorage.setItem('vocabData', vocabData);
+      localStorage.removeItem('flashcardData');
+    }
+    
+    // Redirect to the vocab hub page
+    router.replace('/vocab');
+  }, [router]);
+  
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <BreathingLoader message="Redirecting to Vocab Hub" />
+    </div>
+  );
+}

@@ -1,0 +1,63 @@
+.highlighted-text {
+  background-color: yellow !important;
+  padding: 0 2px;
+  display: inline;
+  border-radius: 2px;
+}
+
+.highlight-button {
+  position: absolute;
+  z-index: 1000;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  background-color: white;
+  border-radius: 8px;
+  padding: 10px;
+  transform: translateX(-50%);
+  display: block;
+  border: 1px solid #ddd;
+  transition: all 0.2s ease;
+}
+
+/* Mobile-first button styles with larger touch target */
+.highlight-button button {
+  background-color: #FFCC00;
+  color: #000000;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;  /* Minimum 44px touch target */
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s ease;
+}
+
+.highlight-button button:active {
+  background-color: #FFD733;
+  transform: scale(0.98);
+}
+
+/* Desktop button styles - override mobile styles */
+@media (min-width: 768px) {
+  .highlight-button {
+    padding: 8px;
+  }
+  
+  .highlight-button button {
+    border-radius: 4px;
+    padding: 5px 12px;
+    min-height: 32px;
+    min-width: 32px;
+    font-size: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .highlight-button button:hover {
+    background-color: #FFD733;
+    transform: translateY(-1px);
+  }
+}
