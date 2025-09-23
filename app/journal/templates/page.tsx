@@ -1,6 +1,6 @@
 'use client';
 
-import { TemplateCollection } from '@/components/journal/template-collection';
+import { TemplateCollection } from '@/components/features/journal/templates';
 import { useAuth } from '@/hooks/auth/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';

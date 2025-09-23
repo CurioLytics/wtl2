@@ -8,8 +8,8 @@ import { FlashcardWebhookResponseArray } from '@/types/flashcard';
 import { Button } from '@/components/ui/button';
 import { BreathingLoader } from '@/components/ui/breathing-loader';
 import { HighlightSelector } from '@/components/journal/highlight-selector-new';
-import { HighlightList } from '@/components/journal/highlight-list';
-import styles from '@/components/journal/highlight-selector.module.css';
+import { HighlightList } from '@/components/features/journal/editor/highlight-list';
+import styles from '@/components/features/journal/editor/highlight-selector.module.css';
 
 export default function JournalFeedbackPage() {
   const router = useRouter();

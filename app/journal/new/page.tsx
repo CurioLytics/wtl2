@@ -10,6 +10,7 @@ import { generatePlaceholderFeedback } from '@/utils/journal-utils';
 import { Button } from '@/components/ui/button';
 import { BreathingLoader } from '@/components/ui/breathing-loader';
 import { formatDateInput } from '@/utils/date-utils';
+import { LiveMarkdownEditor } from '@/components/features/journal/editor';
 
 // Helper function to determine template type from tags
 const getTemplateTypeFromTags = (tags: string[]): string => {
@@ -53,6 +54,7 @@ export default function NewJournalPage() {
   const [isEditMode, setIsEditMode] = useState(false);
 
   const templateId = searchParams?.get('templateId');
+  const customContent = searchParams?.get('customContent');
   const isEdit = searchParams?.get('edit') === 'true';
   
   // Redirect if not authenticated
@@ -99,8 +101,13 @@ export default function NewJournalPage() {
         const today = new Date();
         setTitle(`${templateData.name} - ${today.toLocaleDateString()}`);
         
+        // Check if customContent is provided (from template preview)
+        if (customContent) {
+          // Use the custom edited content from the template preview
+          setContent(decodeURIComponent(customContent));
+        }
         // Use the template content directly from the database
-        if (templateData.content) {
+        else if (templateData.content) {
           // Populate the textarea with the template content
           setContent(templateData.content);
         } else {
@@ -455,13 +462,14 @@ export default function NewJournalPage() {
             <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
               Content
             </label>
-            <textarea
-              id="content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary min-h-[400px]"
-              placeholder="Start writing..."
-            />
+            <div className="w-full">
+              <LiveMarkdownEditor 
+                value={content}
+                onChange={(val: string) => setContent(val)}
+                placeholder="Start writing..."
+                minHeight={400}
+              />
+            </div>
           </div>
           
           {error && (

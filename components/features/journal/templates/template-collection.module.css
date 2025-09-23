@@ -1,0 +1,80 @@
+.templateCard {
+  transition: all 0.2s ease-in-out;
+}
+
+.templateCard:hover {
+  transform: translateY(-3px);
+}
+
+.categoryTabs {
+  scrollbar-width: none; /* For Firefox */
+}
+
+.categoryTabs::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Opera */
+}
+
+.activeTab {
+  transition: all 0.2s ease-in-out;
+}
+
+.placeholder {
+  background: linear-gradient(90deg, #f1f1f1 0%, #e4e4e4 50%, #f1f1f1 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.cardGrid {
+  display: grid;
+  /* Mobile-first: 1 column on small screens, with full width minus some padding */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 1rem;
+  padding: 0.25rem;
+  transition: all 0.3s ease;
+}
+
+@media (min-width: 640px) {
+  .cardGrid {
+    /* Tablet: 2 columns with slightly larger cards */
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+    padding: 0.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .cardGrid {
+    /* Desktop: More columns with larger cards */
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 0.75rem;
+  }
+}
+
+/* For template cards when loading */
+.cardPlaceholder {
+  height: 240px;
+  border-radius: 0.5rem;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}

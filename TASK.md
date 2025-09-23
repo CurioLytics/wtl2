@@ -48,12 +48,14 @@
   - Add responsive design adjustments for different screen sizes
 
 ## Completed
-- Implement Flashcard Sets integration in Vocab Hub [September 23, 2025]
-  - Created mock data for flashcard sets in mock-flashcard-data.ts
-  - Integrated FlashcardSetList component with the Vocab Hub page
-  - Added support for displaying loading states, errors, and empty states
-  - Modified page layout to display both flashcard sets and vocabulary collections
-  - Set up the UI structure for future integration with actual API data
+- Implement Simplified Vocab Hub with Flashcard Sets [September 23, 2025]
+  - Removed all vocabulary collections-related components and code
+  - Simplified UI to focus exclusively on flashcard sets
+  - Integrated API calls with real Supabase functions
+  - Implemented proper loading states and error handling
+  - Removed mock data in favor of real data from backend
+  - Created vocabService for future vocabulary collection needs
+  - Streamlined user interface for better focus and clarity
 
 - Update navigation icons with Lucide React components [September 22, 2025]
   - Replaced image-based icons with Lucide React components
