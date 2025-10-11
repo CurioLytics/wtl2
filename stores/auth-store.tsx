@@ -19,25 +19,76 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
   useEffect(() => {
+    // Track mounted state to prevent state updates after unmount
+    let mounted = true;
+    
     const checkUser = async () => {
-      const { user, error } = await getCurrentUser();
-      
-      if (user) {
-        const supabase = createClientComponentClient();
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('onboarding_completed')
-          .eq('id', user.id)
-          .single();
+      try {
+        const { user, error } = await getCurrentUser();
+        
+        // Only continue if component is still mounted
+        if (!mounted) return;
+        
+        if (user) {
+          const supabase = createClientComponentClient();
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('onboarding_completed')
+            .eq('id', user.id)
+            .single();
 
-        setOnboardingCompleted(Boolean(profile?.onboarding_completed));
+          if (mounted) {
+            setOnboardingCompleted(Boolean(profile?.onboarding_completed));
+          }
+        }
+
+        if (mounted) {
+          setUser(user);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Error checking user:", err);
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
+        }
       }
-
-      setUser(user);
-      setLoading(false);
     };
 
+    // Initial auth check
     checkUser();
+    
+    // Set up auth state subscription
+    const supabase = createClientComponentClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+        
+        // Update user state when auth state changes
+        setUser(session?.user || null);
+        
+        // Check onboarding status if user exists
+        if (session?.user) {
+          (async () => {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('onboarding_completed')
+              .eq('id', session.user.id)
+              .single();
+              
+            if (mounted) {
+              setOnboardingCompleted(Boolean(profile?.onboarding_completed));
+            }
+          })();
+        }
+      }
+    );
+
+    // Cleanup subscription when component unmounts
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {

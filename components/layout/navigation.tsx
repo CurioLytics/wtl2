@@ -21,6 +21,10 @@ type NavigationItem = {
 };
 
 import { Home, BookOpen, MessageCircle, BookOpenCheck, LogIn, LogOut, User, ChevronLeft, ChevronRight } from 'lucide-react';
+import { UserProfileDisplay } from './user-profile-display';
+import { useAuth } from '@/hooks/auth/use-auth';
+import { signOut } from '@/services/api/auth-service';
+import { useRouter } from 'next/navigation';
 
 const navigationItems: NavigationItem[] = [
   {
@@ -59,6 +63,8 @@ export function Navigation({ isDesktopSidebar = false }: NavigationProps) {
   const { isMobile, isTablet, isDesktop, useBottomNav, useCollapsibleSidebar, useFixedSidebar } = useResponsive();
   const { navigationStyles, getContainerTransition } = useTransitionStyles();
   const { sidebarOpen, toggleSidebar } = useSidebar();
+  const { user } = useAuth();
+  const router = useRouter();
 
   // Auto-collapse sidebar on tablet but keep it expanded on desktop
   useEffect(() => {
@@ -186,33 +192,74 @@ export function Navigation({ isDesktopSidebar = false }: NavigationProps) {
         {/* User Menu - only on desktop/tablet sidebar */}
         {isDesktopSidebar && (
           <div className="mt-auto border-t border-gray-200 pt-4 w-full">
-            <Link
-              href="/profile"
-              className={cn(
-                styles.navItem,
-                styles.inactive,
-                sidebarOpen ? "flex-row justify-start gap-3 px-3" : "flex-col",
-                "w-full"
-              )}
-            >
-              <div 
-                className={styles.navIcon}
-                aria-hidden="true"
-              >
-                <LogOut 
-                  size={24} 
-                  className="stroke-gray-500" 
-                />
-              </div>
-              <span 
+            {user ? (
+              <>
+                {/* Show user profile information when signed in */}
+                {sidebarOpen && (
+                  <div className="px-3 mb-2">
+                    <UserProfileDisplay />
+                  </div>
+                )}
+                <button
+                  onClick={async () => {
+                    await signOut();
+                    router.push('/');
+                  }}
+                  className={cn(
+                    styles.navItem,
+                    styles.inactive,
+                    sidebarOpen ? "flex-row justify-start gap-3 px-3" : "flex-col",
+                    "w-full"
+                  )}
+                >
+                  <div 
+                    className={styles.navIcon}
+                    aria-hidden="true"
+                  >
+                    <LogOut 
+                      size={24} 
+                      className="stroke-gray-500" 
+                    />
+                  </div>
+                  <span 
+                    className={cn(
+                      styles.navLabel,
+                      sidebarOpen ? "text-sm font-medium" : "sr-only"
+                    )}
+                  >
+                    Sign Out
+                  </span>
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/auth"
                 className={cn(
-                  styles.navLabel,
-                  sidebarOpen ? "text-sm font-medium" : "sr-only"
+                  styles.navItem,
+                  styles.inactive,
+                  sidebarOpen ? "flex-row justify-start gap-3 px-3" : "flex-col",
+                  "w-full"
                 )}
               >
-                Profile
-              </span>
-            </Link>
+                <div 
+                  className={styles.navIcon}
+                  aria-hidden="true"
+                >
+                  <LogIn
+                    size={24} 
+                    className="stroke-gray-500" 
+                  />
+                </div>
+                <span 
+                  className={cn(
+                    styles.navLabel,
+                    sidebarOpen ? "text-sm font-medium" : "sr-only"
+                  )}
+                >
+                  Sign In
+                </span>
+              </Link>
+            )}
           </div>
         )}
       </div>

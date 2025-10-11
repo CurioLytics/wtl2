@@ -7,6 +7,26 @@ import { useAuth } from '@/hooks/auth/use-auth';
 import { MinimalTemplateCard } from './minimal-template-card';
 import { PinnedTemplate, fetchPinnedTemplates } from '@/services/api/template-service';
 
+// Implement template cache to prevent repeated API calls
+type TemplateCache = {
+  templates: PinnedTemplate[];
+  timestamp: number;
+  userId: string;
+}
+
+// Cache duration in milliseconds (5 minutes)
+const CACHE_DURATION = 5 * 60 * 1000;
+let templateCache: TemplateCache | null = null;
+
+// Utility function to clear template cache (can be exported and used elsewhere)
+function clearTemplateCache() {
+  templateCache = null;
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('template-cache');
+  }
+  console.log('Template cache cleared');
+}
+
 // Helper function to determine template category from title
 function determineCategory(title: string): string {
   const lowerTitle = title.toLowerCase();
@@ -53,98 +73,158 @@ export function PinnedTemplates({ limit = 4 }: PinnedTemplatesProps) {
     }
   ];
 
+  // On mount, try to restore cache from localStorage
   useEffect(() => {
-    async function loadTemplates() {
-      setLoading(true);
-      setError(null);
-      
+    // Only run in browser environment
+    if (typeof window !== 'undefined') {
       try {
-        if (!user?.id) {
-          // If no user ID, use fallback templates but show message
-          setTemplates(fallbackTemplates);
-          setError('No user ID available. Using default templates.');
-          return;
-        }
-        
-        // Make direct API call to capture the raw response
-        const response = await fetch('https://auto.zephyrastyle.com/webhook/get-pinned-template', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ profileId: user.id })
-        });
-
-        // Save the response status and headers for debugging
-        const responseInfo = {
-          status: response.status,
-          statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries()),
-        };
-
-        let responseData: any;
-        
-        // Try to parse response as JSON
-        try {
-          responseData = await response.json();
-          // Store the raw API response for debugging
-          setApiResponse({ 
-            info: responseInfo,
-            data: responseData 
-          });
-        } catch (jsonError) {
-          // Handle JSON parsing errors
-          setApiResponse({ 
-            info: responseInfo,
-            error: 'Failed to parse JSON response',
-            errorDetails: (jsonError as Error).message
-          });
-          throw new Error(`Failed to parse JSON response: ${(jsonError as Error).message}`);
-        }
-
-        // Process the response data using our service function
-        let fetchedTemplates: PinnedTemplate[] = [];
-        
-        // Handle the nested response structure (array format)
-        if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].data) {
-          fetchedTemplates = responseData[0].data.map((template: any) => ({
-            id: template.id,
-            title: template.name, // 'name' in API maps to 'title' in our app
-            category: template.category || determineCategory(template.name), // Use category if available or infer
-            content: template.content
-          }));
-        } 
-        // Handle direct data property format (what we're seeing in your debug output)
-        else if (responseData.data && Array.isArray(responseData.data)) {
-          fetchedTemplates = responseData.data.map((template: any) => ({
-            id: template.id,
-            title: template.name, // 'name' in API maps to 'title' in our app
-            category: template.category || determineCategory(template.name), // Use category if available or infer
-            content: template.content
-          }));
-        }
-        // Original format
-        else if (responseData.templates && Array.isArray(responseData.templates)) {
-          fetchedTemplates = responseData.templates;
-        }
-        
-        if (fetchedTemplates.length > 0) {
-          setTemplates(fetchedTemplates);
-        } else {
-          // If no templates returned, use fallback templates but show message
-          setError('No templates returned from API. Using default templates.');
-          setTemplates(fallbackTemplates);
+        const cachedData = localStorage.getItem('template-cache');
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData) as TemplateCache;
+          const now = Date.now();
+          
+          // Check if cache is still valid
+          if (now - parsed.timestamp < CACHE_DURATION) {
+            templateCache = parsed;
+            console.log('Loaded template cache from localStorage');
+          } else {
+            console.log('Template cache expired, will fetch fresh data');
+            localStorage.removeItem('template-cache');
+          }
         }
       } catch (err) {
-        console.error('Error fetching templates:', err);
-        // Show detailed error message
-        setError(`API Error: ${(err as Error).message}. Using default templates instead.`);
-        setTemplates(fallbackTemplates);
-      } finally {
-        setLoading(false);
+        console.warn('Failed to load templates from localStorage:', err);
       }
     }
+  }, []);
+
+  // Function to load templates
+  const loadTemplates = async () => {
+    setLoading(true);
+    setError(null);
     
+    try {
+      if (!user?.id) {
+        // If no user ID, use fallback templates but show message
+        setTemplates(fallbackTemplates);
+        setError('No user ID available. Using default templates.');
+        setLoading(false);
+        return;
+      }
+      
+      // Check if we have valid cached data for this user
+      const now = Date.now();
+      if (templateCache && 
+          templateCache.userId === user.id && 
+          now - templateCache.timestamp < CACHE_DURATION && 
+          templateCache.templates.length > 0) {
+        
+        console.log('Using cached templates data');
+        setTemplates(templateCache.templates);
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Fetching templates from API');
+      
+      // Make direct API call to capture the raw response
+      const response = await fetch('https://auto.zephyrastyle.com/webhook/get-pinned-template', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-Request-ID': `${user.id}-${Date.now()}`
+        },
+        body: JSON.stringify({ profileId: user.id })
+      });
+
+      // Save the response status and headers for debugging
+      const responseInfo = {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+      };
+
+      let responseData: any;
+      
+      // Try to parse response as JSON
+      try {
+        responseData = await response.json();
+        // Store the raw API response for debugging
+        setApiResponse({ 
+          info: responseInfo,
+          data: responseData 
+        });
+      } catch (jsonError) {
+        // Handle JSON parsing errors
+        setApiResponse({ 
+          info: responseInfo,
+          error: 'Failed to parse JSON response',
+          errorDetails: (jsonError as Error).message
+        });
+        throw new Error(`Failed to parse JSON response: ${(jsonError as Error).message}`);
+      }
+
+      // Process the response data using our service function
+      let fetchedTemplates: PinnedTemplate[] = [];
+      
+      // Handle the nested response structure (array format)
+      if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].data) {
+        fetchedTemplates = responseData[0].data.map((template: any) => ({
+          id: template.id,
+          title: template.name, // 'name' in API maps to 'title' in our app
+          category: template.category || determineCategory(template.name), // Use category if available or infer
+          content: template.content
+        }));
+      } 
+      // Handle direct data property format (what we're seeing in your debug output)
+      else if (responseData.data && Array.isArray(responseData.data)) {
+        fetchedTemplates = responseData.data.map((template: any) => ({
+          id: template.id,
+          title: template.name, // 'name' in API maps to 'title' in our app
+          category: template.category || determineCategory(template.name), // Use category if available or infer
+          content: template.content
+        }));
+      }
+      // Original format
+      else if (responseData.templates && Array.isArray(responseData.templates)) {
+        fetchedTemplates = responseData.templates;
+      }
+      
+      if (fetchedTemplates.length > 0) {
+        // Update the templates state
+        setTemplates(fetchedTemplates);
+        
+        // Save to cache
+        templateCache = {
+          templates: fetchedTemplates,
+          timestamp: Date.now(),
+          userId: user.id
+        };
+        
+        // Also save to localStorage for persistence across page refreshes
+        try {
+          localStorage.setItem('template-cache', JSON.stringify(templateCache));
+        } catch (storageErr) {
+          console.warn('Failed to save templates to localStorage:', storageErr);
+        }
+      } else {
+        // If no templates returned, use fallback templates but show message
+        setError('No templates returned from API. Using default templates.');
+        setTemplates(fallbackTemplates);
+      }
+    } catch (err) {
+      console.error('Error fetching templates:', err);
+      // Show detailed error message
+      setError(`API Error: ${(err as Error).message}. Using default templates instead.`);
+      setTemplates(fallbackTemplates);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load templates when user changes
+  useEffect(() => {
     loadTemplates();
   }, [user?.id]);
 
@@ -169,14 +249,39 @@ export function PinnedTemplates({ limit = 4 }: PinnedTemplatesProps) {
   return (
     <div className="bg-white shadow rounded-lg p-5">
       <div className="flex justify-between items-center mb-4">
-      {/* Debug toggle button for developers */}
-      {process.env.NODE_ENV !== 'production' && (
-        <button
-        onClick={() => setShowDebugInfo(!showDebugInfo)}
-        className="text-xs text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
-        >
-        {showDebugInfo ? 'Hide Debug Info' : 'Show Debug Info'}
-        </button>
+        {/* Debug toggle button for developers */}
+        {process.env.NODE_ENV !== 'production' && (
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setShowDebugInfo(!showDebugInfo)}
+              className="text-xs text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
+            >
+              {showDebugInfo ? 'Hide Debug Info' : 'Show Debug Info'}
+            </button>
+            <button
+              onClick={() => {
+                clearTemplateCache();
+                loadTemplates();
+              }}
+              className="text-xs text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded"
+            >
+              Refresh Templates
+            </button>
+          </div>
+        )}
+        
+        {/* For users in production, add a subtle refresh option */}
+        {process.env.NODE_ENV === 'production' && !loading && (
+          <button
+            onClick={() => {
+              clearTemplateCache();
+              loadTemplates();
+            }}
+            className="text-xs text-gray-400 hover:text-gray-600"
+            aria-label="Refresh templates"
+          >
+            ↻ Refresh
+          </button>
         )}
       </div>
       
@@ -220,6 +325,17 @@ export function PinnedTemplates({ limit = 4 }: PinnedTemplatesProps) {
                       {JSON.stringify(apiResponse.data, null, 2)}
                     </pre>
                   </details>
+                  
+                  {templateCache && (
+                    <details>
+                      <summary className="cursor-pointer hover:text-blue-600 mt-2">View Cache Status</summary>
+                      <div className="mt-1 p-1 bg-gray-100 rounded text-xs">
+                        <p><strong>Cache Age:</strong> {Math.round((Date.now() - templateCache.timestamp) / 1000)} seconds</p>
+                        <p><strong>Cache Expires In:</strong> {Math.round((CACHE_DURATION - (Date.now() - templateCache.timestamp)) / 1000)} seconds</p>
+                        <p><strong>Templates Cached:</strong> {templateCache.templates.length}</p>
+                      </div>
+                    </details>
+                  )}
                 </>
               )}
             </div>

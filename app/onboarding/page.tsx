@@ -25,17 +25,29 @@ export default function OnboardingPage() {
     setProfile((prev) => ({ ...prev, ...updates }));
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const handleNext = async () => {
     if (step < 4) {
       setStep(step + 1);
     } else {
+      // Prevent multiple submissions
+      if (isSubmitting) {
+        console.log('Already submitting, ignoring duplicate request');
+        return;
+      }
+      
       setError(null);
+      setIsSubmitting(true);
+      
       try {
         console.log('Submitting profile:', profile);
         const response = await fetch('/api/profile', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            // Add a request ID to help with deduplication
+            'X-Request-ID': `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
           },
           body: JSON.stringify(profile),
         });
@@ -52,13 +64,16 @@ export default function OnboardingPage() {
 
         if (data.success) {
           // Redirect to journal templates page instead of dashboard
-          router.push('/journal/templates');
+          // Use replace instead of push to prevent back navigation to the onboarding page
+          router.replace('/journal/templates');
         } else {
           setError('Failed to save profile. Please try again.');
         }
       } catch (error) {
         console.error('Error saving profile:', error);
         setError('An unexpected error occurred. Please try again.');
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -136,16 +151,29 @@ export default function OnboardingPage() {
             <Button
               onClick={() => setStep(step - 1)}
               variant="outline"
+              disabled={isSubmitting}
             >
               Back
             </Button>
           )}
           <Button
             onClick={handleNext}
-            disabled={!canProceed()}
-            className="ml-auto"
+            disabled={!canProceed() || isSubmitting}
+            className="ml-auto relative"
           >
-            {step === 4 ? 'Complete' : 'Continue'}
+            {step === 4 ? 
+              (isSubmitting ? 
+                <>
+                  <span className="opacity-0">Complete</span>
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </span>
+                </> 
+                : 'Complete')
+              : 'Continue'}
           </Button>
         </div>
       </div>

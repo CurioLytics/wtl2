@@ -4,6 +4,10 @@ import { NextResponse } from 'next/server';
 import type { UserProfile } from '@/types/onboarding';
 import { sendWebhook } from '@/utils/webhook';
 
+// Use a simple in-memory cache to prevent duplicate profile updates in a short time period
+const PROFILE_UPDATE_CACHE = new Map<string, number>();
+const CACHE_TTL = 10000; // 10 seconds
+
 export async function POST(request: Request) {
   try {
     const supabase = createRouteHandlerClient({ cookies });
@@ -13,6 +17,34 @@ export async function POST(request: Request) {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check for recent duplicate requests
+    const cacheKey = `${user.id}-${JSON.stringify(profile)}`;
+    const lastUpdate = PROFILE_UPDATE_CACHE.get(cacheKey);
+    const now = Date.now();
+    
+    if (lastUpdate && now - lastUpdate < CACHE_TTL) {
+      console.log('Duplicate profile update detected, using cached response');
+      return NextResponse.json({ 
+        success: true,
+        profile: {
+          userId: user.id,
+          email: user.email,
+          ...profile,
+          onboardingCompleted: true,
+        },
+        cached: true
+      });
+    }
+    
+    // Update cache timestamp
+    PROFILE_UPDATE_CACHE.set(cacheKey, now);
+    
+    // Clean up old cache entries
+    if (PROFILE_UPDATE_CACHE.size > 100) {
+      const oldestKey = Array.from(PROFILE_UPDATE_CACHE.keys())[0];
+      PROFILE_UPDATE_CACHE.delete(oldestKey);
     }
 
     console.log('Attempting to save profile:', profile);
@@ -44,34 +76,31 @@ export async function POST(request: Request) {
     }
 
     // Send webhook with profile data and user ID
+    // Add a unique timestamp to help with idempotency
+    const timestamp = new Date().toISOString();
     const webhookData = {
       userId: user.id,
       email: user.email,
       ...profile,
       onboardingCompleted: true,
-      timestamp: new Date().toISOString(),
+      timestamp,
+      requestId: `${user.id}-${timestamp}`  // Add unique request ID
     };
 
     console.log('Preparing to send webhook with data:', webhookData);
     
-    let webhookStatus;
-    try {
-      webhookStatus = await sendWebhook(webhookData);
-      console.log('Webhook result:', webhookStatus);
-    } catch (webhookError) {
-      console.error('Error sending webhook:', webhookError);
-      webhookStatus = {
-        success: false,
-        error: webhookError instanceof Error ? webhookError.message : 'Unknown error'
-      };
-    }
-
+    // Send webhook asynchronously to avoid blocking the response
+    // This is a good approach for non-critical operations
+    let webhookPromise = sendWebhook(webhookData);
+    
+    // Return success immediately while webhook continues in the background
     return NextResponse.json({ 
       success: true,
       profile: webhookData,
-      webhook: webhookStatus
+      webhook: 'processing_async' // Don't wait for webhook result
     });
   } catch (error) {
+    console.error('Profile update error:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

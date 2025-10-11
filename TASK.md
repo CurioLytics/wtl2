@@ -1,6 +1,16 @@
 # Tasks
 
 ## In Progress
+
+- Optimize Google Authentication Flow [October 9, 2025]
+  - Fix OAuth sign-in with Google implementation
+  - Add proper error handling for failed OAuth attempts
+  - Implement automatic profile creation after Google sign-in
+  - Enhance OAuth button with better loading states and feedback
+  - Add comprehensive unit tests for OAuth authentication flow
+  - Document Google OAuth setup and configuration process
+  - Ensure mobile-friendly OAuth buttons and login experience
+
 - Implement onboarding to journaling transition [September 21, 2025]
   - Fetch journal templates from API after profile creation
   - Group templates by tags/categories
@@ -48,6 +58,15 @@
   - Add responsive design adjustments for different screen sizes
 
 ## Completed
+- Implement global user profile management [October 9, 2025]
+  - Created user profile store with Zustand
+  - Implemented profile data fetching after sign-in
+  - Stored user profile in global state with sessionStorage persistence
+  - Created UserProvider component for app-wide profile access
+  - Updated navigation component to display user profile information
+  - Added profile state clearing on logout
+  - Integrated profile display in sidebar navigation
+
 - Implement Simplified Vocab Hub with Flashcard Sets [September 23, 2025]
   - Removed all vocabulary collections-related components and code
   - Simplified UI to focus exclusively on flashcard sets
@@ -145,42 +164,71 @@ make the set has image of multiple cards, like a stack of cards -->
 
 
 
-<!-- once sign in, should store profiles info (name, userid) so that other
-eleent in app can use it (for exapmle to show user name in header...) 
+<!-- 
 ->
 
 start writing -> sign up
 remove the guide: "clear selection, click to select,..)
-The wrting screen should be clean. the content section now is too small ( should be in same size as the page "creat falshcard"
+The wrting screen should be clean. the content CONTAINER now is too small ( should be in same size as the page "creat falshcard"
 )
 
 
 return to journal -> return to feedback page 
 
+----------------------------------FEATURES--------------------------
+profile page: 
+- Grop of setting: 
+  - log out
+  - Account settings (change email, password)
+  - Notification preferences (email reminders)
+  - Personalized preferences : goals, current level
+  - Delete account option
+each group is under a collapsible section
 
-
-
-
-
-
+Role-play
+supabase table: roleplay_scenario
+output: 
+create table roleplay_scenario (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,              -- scenario name, e.g. "IT Job Interview"
+  context text not null,           -- setup paragraph
+  starter_message text not null,   -- first message to kick off role-play
+  guide text,                      -- instructions or tips for the learner
+  level text,                      -- CEFR level: A1, B2, etc.
+  topic text,                      -- topic area: work, travel, etc.
+  created_at timestamp default now(),
+  role1 text
+);
+Screen display: card collection, name ,level. Filter: topic
+Once clicked, show a card info: name, context, guide.
+once click "start"
+-> go to chat page, with the context and first message loaded.
+chat page: left: role1, right: user
 
 
 ------------------------------UI------------------------
-Navigation side bar: if user close, keep it close even user choose another page. show big only when user click the hamburger icon.
-
 side bar: always in collapsed,if user click hamburger icon, show full side bar. sidebar over screen,dark background, click outside to close. dont affect the page width.
 
+No declutter, writing space no need background color change, just keep it clean, no other element on the screen.
+
+calendar: darkest: today, darder: days having hournal , ligher: days no journal
 
 
-
-
-
+-------------------------------REFACTOR------------------
 Choose template of iccons, global theme
-save all the endponts, webhook, supabase funtion in a place -->
+save all the endponts, webhook, supabase funtion in a place 
+
+-------------------------LOGIN---------------------------------
+once sign in, should store profiles info (name, userid) so that other
+elements in app can use it (for example to show user name in header...)
+No email sent
+
+-->
 
 
 
 
+text editor: https://overtype.dev/?ref=dailydev
 
 
 

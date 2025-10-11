@@ -13,90 +13,90 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          title: string
           content: string
-          template_id: string | null
-          created_at: string
+          journal_date: string | null
+          title: string | null
         }
         Insert: {
           id?: string
           user_id: string
-          title: string
           content: string
-          template_id?: string | null
-          created_at?: string
+          journal_date?: string | null
+          title?: string | null
         }
         Update: {
           id?: string
           user_id?: string
-          title?: string
           content?: string
-          template_id?: string | null
-          created_at?: string
+          journal_date?: string | null
+          title?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "journals_user_id_fkey"
             columns: ["user_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "journals_template_id_fkey"
-            columns: ["template_id"]
-            referencedRelation: "journal_templates"
+            referencedRelation: "auth.users"
             referencedColumns: ["id"]
           }
         ]
       }
-      journal_templates: {
+      journal_template: {
         Row: {
           id: string
-          title: string
-          description: string
-          template_content: string
-          tags: string[]
-          created_at: string
+          name: string
+          content: string | null
+          tag: string[] | null
+          other: string | null
+          category: string | null
         }
         Insert: {
           id?: string
-          title: string
-          description: string
-          template_content: string
-          tags?: string[]
-          created_at?: string
+          name: string
+          content?: string | null
+          tag?: string[] | null
+          other?: string | null
+          category?: string | null
         }
         Update: {
           id?: string
-          title?: string
-          description?: string
-          template_content?: string
-          tags?: string[]
-          created_at?: string
+          name?: string
+          content?: string | null
+          tag?: string[] | null
+          other?: string | null
+          category?: string | null
         }
         Relationships: []
       }
       profiles: {
         Row: {
           id: string
-          email: string
-          full_name: string | null
+          name: string | null
+          english_level: string | null
+          goals: string[] | null
+          writing_types: string[] | null
+          updated_at: string | null
           onboarding_completed: boolean
-          created_at: string
+          pinned_template_ids: string[] | null
         }
         Insert: {
           id: string
-          email: string
-          full_name?: string | null
+          name?: string | null
+          english_level?: string | null
+          goals?: string[] | null
+          writing_types?: string[] | null
+          updated_at?: string | null
           onboarding_completed?: boolean
-          created_at?: string
+          pinned_template_ids?: string[] | null
         }
         Update: {
           id?: string
-          email?: string
-          full_name?: string | null
+          name?: string | null
+          english_level?: string | null
+          goals?: string[] | null
+          writing_types?: string[] | null
+          updated_at?: string | null
           onboarding_completed?: boolean
-          created_at?: string
+          pinned_template_ids?: string[] | null
         }
         Relationships: [
           {
@@ -106,6 +106,138 @@ export interface Database {
             referencedColumns: ["id"]
           }
         ]
+      }
+      flashcard_set: {
+        Row: {
+          id: string
+          title: string
+          created_at: string | null
+          profile_id: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          created_at?: string | null
+          profile_id?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          created_at?: string | null
+          profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_set_profile_id_fkey"
+            columns: ["profile_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      flashcard: {
+        Row: {
+          id: string
+          set_id: string
+          front: string
+          back: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          set_id: string
+          front: string
+          back: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          set_id?: string
+          front?: string
+          back?: string
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_set_id_fkey"
+            columns: ["set_id"]
+            referencedRelation: "flashcard_set"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      flashcard_status: {
+        Row: {
+          id: string
+          flashcard_id: string
+          interval: number
+          repetitions: number
+          ease_factor: number
+          next_review_at: string | null
+          last_review_at: string | null
+        }
+        Insert: {
+          id?: string
+          flashcard_id: string
+          interval?: number
+          repetitions?: number
+          ease_factor?: number
+          next_review_at?: string | null
+          last_review_at?: string | null
+        }
+        Update: {
+          id?: string
+          flashcard_id?: string
+          interval?: number
+          repetitions?: number
+          ease_factor?: number
+          next_review_at?: string | null
+          last_review_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_status_flashcard_id_fkey"
+            columns: ["flashcard_id"]
+            referencedRelation: "flashcard"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      roleplay_scenario: {
+        Row: {
+          id: string
+          name: string
+          context: string
+          starter_message: string
+          guide: string | null
+          level: string | null
+          topic: string | null
+          created_at: string | null
+          role1: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          context: string
+          starter_message: string
+          guide?: string | null
+          level?: string | null
+          topic?: string | null
+          created_at?: string | null
+          role1?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          context?: string
+          starter_message?: string
+          guide?: string | null
+          level?: string | null
+          topic?: string | null
+          created_at?: string | null
+          role1?: string | null
+        }
+        Relationships: []
       }
       vocabulary: {
         Row: {

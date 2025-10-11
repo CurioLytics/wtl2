@@ -1,0 +1,19 @@
+{
+  "servers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@0.5.5"
+      ],
+      "env": {
+        "SUPABASE_URL": "https://eqhldzwiymtcyxyxezos.supabase.co",
+        "SUPABASE_SERVICE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxaGxkendpeW10Y3l4eXhlem9zIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODM0ODA4MCwiZXhwIjoyMDczOTI0MDgwfQ.Okz-XJ5MUSYHHd1tNJUiK6D2r4g4-j8hqjF3OGV6ZVo",
+        "SUPABASE_PROJECT_REF": "eqhldzwiymtcyxyxezos",
+        "SUPABASE_ACCESS_TOKEN": "sbp_add2774a33a1381be3415e63f2a7c60d3b031d6e"
+      },
+      "type": "stdio"
+    }
+  },
+  "inputs": []
+}

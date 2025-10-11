@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/auth/use-auth';
+import useCachedFetch from '@/hooks/common/use-cached-fetch';
 
 export interface PinnedTemplate {
   id: string;
@@ -26,10 +27,16 @@ interface ApiTemplateResponse {
  */
 export async function fetchPinnedTemplates(profileId: string): Promise<PinnedTemplate[]> {
   try {
+    // Generate a request ID for idempotency
+    const requestId = `${profileId}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    
     const response = await fetch('https://auto.zephyrastyle.com/webhook/get-pinned-template', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        'X-Request-ID': requestId,
+        'X-Profile-ID': profileId
       },
       body: JSON.stringify({ profileId })
     });
@@ -93,23 +100,50 @@ function determineCategory(name: string): string {
 }
 
 /**
- * Custom hook for accessing pinned templates
+ * Custom hook for accessing pinned templates with built-in caching
  */
 export function usePinnedTemplates() {
   const { user } = useAuth();
-  
-  const getPinnedTemplates = async () => {
-    if (!user?.id) {
-      return [];
+
+  // Default fallback templates
+  const fallbackTemplates: PinnedTemplate[] = [
+    {
+      id: '1',
+      title: 'Morning Check-in',
+      category: 'Journaling'
+    },
+    {
+      id: '2',
+      title: 'Minimalism Prompt',
+      category: 'Productivity'
     }
-    
-    try {
+  ];
+  
+  // Use the cached fetch hook
+  const { 
+    data: templates,
+    loading, 
+    error,
+    refresh,
+    clearCache
+  } = useCachedFetch<PinnedTemplate[]>({
+    key: `pinned-templates-${user?.id || 'anonymous'}`,
+    duration: 5 * 60 * 1000, // 5 minutes
+    dependencyArray: [user?.id],
+    fetcher: async () => {
+      if (!user?.id) {
+        return fallbackTemplates;
+      }
       return await fetchPinnedTemplates(user.id);
-    } catch (error) {
-      console.error('Error in usePinnedTemplates hook:', error);
-      return [];
-    }
-  };
+    },
+    fallback: fallbackTemplates
+  });
   
-  return { getPinnedTemplates };
+  return { 
+    templates: templates || fallbackTemplates,
+    loading,
+    error,
+    refresh,
+    clearCache
+  };
 }

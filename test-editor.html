@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plain Text Editor Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9fafb;
+        }
+        
+        .editor-container {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .editor-toolbar {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f9fafb;
+        }
+        
+        .preview-toggle {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .preview-toggle:hover {
+            background: #4b5563;
+        }
+        
+        .editor-content {
+            position: relative;
+        }
+        
+        .editor-textarea {
+            width: 100%;
+            min-height: 400px;
+            padding: 16px;
+            border: none;
+            resize: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            outline: none;
+            background: white;
+        }
+        
+        .preview-content {
+            min-height: 400px;
+            padding: 16px;
+            background: white;
+            white-space: pre-wrap;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .placeholder {
+            color: #9ca3af;
+            font-style: italic;
+        }
+        
+        h1 {
+            color: #1f2937;
+            margin-bottom: 24px;
+        }
+        
+        .success-message {
+            background: #d1fae5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Plain Text Journal Editor Test</h1>
+    
+    <div class="success-message">
+        ✅ All formatting features have been successfully removed from the journal editor!
+        <br><br>
+        <strong>Changes made:</strong>
+        <ul style="margin: 8px 0 0 20px;">
+            <li>Removed FormatToolbar component</li>
+            <li>Removed FormatDropdown component</li>
+            <li>Removed TipTap rich text editor</li>
+            <li>Removed markdown parsing and rendering</li>
+            <li>Simplified to plain text textarea</li>
+            <li>Kept simple preview functionality</li>
+        </ul>
+    </div>
+    
+    <div class="editor-container">
+        <div class="editor-toolbar">
+            <div></div>
+            <button class="preview-toggle" onclick="togglePreview()" id="previewBtn">Preview</button>
+        </div>
+        
+        <div class="editor-content">
+            <textarea 
+                id="editor" 
+                class="editor-textarea" 
+                placeholder="Start writing your journal entry..."
+                onInput="updateContent()"
+            >This is a plain text journal editor.
+
+No more formatting options like:
+- Bold text
+- Italic text  
+- Headings
+- Lists
+- Code blocks
+- Highlights
+- Task lists
+
+Just simple, clean text writing for your journal entries.
+
+You can still toggle between edit and preview mode to see how your text looks.</textarea>
+            
+            <div id="preview" class="preview-content" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let isPreviewMode = false;
+        
+        function togglePreview() {
+            const editor = document.getElementById('editor');
+            const preview = document.getElementById('preview');
+            const btn = document.getElementById('previewBtn');
+            
+            isPreviewMode = !isPreviewMode;
+            
+            if (isPreviewMode) {
+                editor.style.display = 'none';
+                preview.style.display = 'block';
+                btn.textContent = 'Edit';
+                updatePreview();
+            } else {
+                editor.style.display = 'block';
+                preview.style.display = 'none';
+                btn.textContent = 'Preview';
+            }
+        }
+        
+        function updateContent() {
+            if (isPreviewMode) {
+                updatePreview();
+            }
+        }
+        
+        function updatePreview() {
+            const editor = document.getElementById('editor');
+            const preview = document.getElementById('preview');
+            const content = editor.value;
+            
+            if (content.trim() === '') {
+                preview.innerHTML = '<span class="placeholder">Your preview will appear here...</span>';
+            } else {
+                preview.textContent = content;
+            }
+        }
+        
+        // Initialize
+        updatePreview();
+    </script>
+</body>
+</html>
