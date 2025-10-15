@@ -41,33 +41,22 @@ export default function OnboardingPage() {
       setIsSubmitting(true);
       
       try {
-        console.log('Submitting profile:', profile);
-        const response = await fetch('/api/profile', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            // Add a request ID to help with deduplication
-            'X-Request-ID': `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
-          },
-          body: JSON.stringify(profile),
-        });
-
-        const data = await response.json();
+        console.log('Saving profile in session storage:', profile);
         
-        if (!response.ok) {
-          console.error('Profile save error:', data);
-          setError(data.error || 'Failed to save profile');
-          return;
-        }
-
-        console.log('Profile save result:', data);
-
-        if (data.success) {
-          // Redirect to journal templates page instead of dashboard
-          // Use replace instead of push to prevent back navigation to the onboarding page
-          router.replace('/journal/templates');
-        } else {
-          setError('Failed to save profile. Please try again.');
+        try {
+          // Lưu thông tin profile vào sessionStorage để sử dụng sau khi đăng ký
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('onboardingProfile', JSON.stringify(profile));
+          }
+          
+          // Đánh dấu là đã hoàn thành onboarding
+          console.log('Onboarding completed, redirecting to auth page');
+          
+          // Chuyển hướng đến trang đăng ký với param để hiển thị thông báo
+          router.replace('/auth?onboardingComplete=true');
+        } catch (storageError) {
+          console.error('Error saving to session storage:', storageError);
+          setError('Không thể lưu thông tin. Vui lòng thử lại.');
         }
       } catch (error) {
         console.error('Error saving profile:', error);
@@ -153,7 +142,7 @@ export default function OnboardingPage() {
               variant="outline"
               disabled={isSubmitting}
             >
-              Back
+              Quay lại
             </Button>
           )}
           <Button
@@ -164,7 +153,7 @@ export default function OnboardingPage() {
             {step === 4 ? 
               (isSubmitting ? 
                 <>
-                  <span className="opacity-0">Complete</span>
+                  <span className="opacity-0">Hoàn thành</span>
                   <span className="absolute inset-0 flex items-center justify-center">
                     <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -172,8 +161,8 @@ export default function OnboardingPage() {
                     </svg>
                   </span>
                 </> 
-                : 'Complete')
-              : 'Continue'}
+                : 'Hoàn thành')
+              : 'Tiếp tục'}
           </Button>
         </div>
       </div>

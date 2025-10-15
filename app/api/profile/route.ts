@@ -15,8 +15,14 @@ export async function POST(request: Request) {
 
     // Get the current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    // Nếu không có người dùng đã đăng nhập, chúng ta chỉ trả về thành công
+    // nhưng không lưu vào database. Thông tin này sẽ được lưu sau khi đăng ký
     if (userError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Profile data received but not saved - user not authenticated' 
+      });
     }
 
     // Check for recent duplicate requests

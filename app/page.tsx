@@ -14,18 +14,18 @@ export default function LandingPage() {
   // Features data
   const features = [
     {
-      title: "Personal Journaling",
-      description: "Free Writing or Template",
+      title: "Nhật ký cá nhân",
+      description: "Viết suy nghĩ, nhận phản hồi tức thì và lưu lại những từ vựng mang ý nghĩa với riêng bạn.",
       iconSrc: "/icons/bookmark.svg",
     },
     {
-      title: "Role-Play Practice",
-      description: "Learn From Real-world Situation",
+      title: "Luyện tập đóng vai",
+      description: "Hóa thân vào tình huống thực tế để luyện nói và phản xạ tự nhiên.",
       iconSrc: "/icons/language.svg",
     },
     {
-      title: "Vocabulary Review",
-      description: "Flashcards - story mode for long-term memory",
+      title: "Ôn tập từ vựng",
+      description: "Ghi nhớ sâu hơn qua flashcard và chế độ dịch chuyện.",
       iconSrc: "/icons/cap.svg",
     },
   ];
@@ -34,36 +34,36 @@ export default function LandingPage() {
   const steps = [
     {
       number: 1,
-      title: "Start Writing",
-      description: "Choose a template or a blank page to begin writing freely.",
+      title: "Viết",
+      description: "Chọn mẫu có sẵn hoặc viết tự do để bắt đầu hành trình học ngôn ngữ của bạn.",
       iconSrc: "/icons/plus.svg",
     },
     {
       number: 2,
-      title: "Get Instant Feedback",
-      description: "AI suggests corrections, style improvements, and vocabulary highlights.",
+      title: "Nhận phản hồi",
+      description: "AI giúp chỉnh ngữ pháp, gợi ý từ mới và cải thiện phong cách viết.",
       iconSrc: "/icons/check.svg",
     },
     {
       number: 3,
-      title: "Select Words to Learn",
-      description: "Pick key words to save into your personalized flashcards.",
+      title: "Lưu & học từ",
+      description: "Chọn những từ quan trọng để thêm vào bộ thẻ ghi nhớ cá nhân.",
       iconSrc: "/icons/bookmark.svg",
     },
     {
       number: 4,
-      title: "Review & Practice",
-      description: "Practice with flashcards or challenge yourself with story translation mode.",
+      title: "Ôn & thực hành",
+      description: "Học lại qua flashcard hoặc thử thách bản thân với chế độ dịch chuyện.",
       iconSrc: "/icons/cap.svg",
     },
   ];
   
   // Footer links
   const footerLinks = [
-    { text: "Log In", href: "/auth" },
-    { text: "Sign Up", href: "/auth" },
-    { text: "Privacy", href: "#" },
-    { text: "Terms", href: "#" },
+    { text: "Đăng nhập", href: "/auth" },
+    { text: "Đăng ký", href: "/auth" },
+    { text: "Quyền riêng tư", href: "#" },
+    { text: "Điều khoản", href: "#" },
   ];
   
   return (
@@ -72,22 +72,22 @@ export default function LandingPage() {
       <Header 
         logoSrc="/images/logo.svg"
         logoText="W2L"
-        buttonText="Start Journaling"
+        buttonText="Đăng ký"
         buttonLink="/auth"
       />
 
       {/* Hero Section */}
       <Hero 
-        title="WRITE TO LEARN"
-        subtitle="Write your thoughts. Learn your words."
-        description="A personal journaling space that helps you reflect and grow your language skill."
-        buttonText="Start Writing"
-        buttonLink="/auth"
+        title="W2L – Viết để Học"
+        subtitle="Biến từng dòng chữ thành bước tiến trong hành trình ngôn ngữ của bạn."
+        description="Viết suy nghĩ, nhận phản hồi tức thì và lưu lại những từ vựng mang ý nghĩa với riêng bạn."
+        buttonText="Bắt đầu hành trình của bạn"
+        buttonLink="/onboarding"
       />
 
       {/* Features Section */}
       <Section 
-        title="What Can You do?" 
+        title="Bạn có thể làm gì với W2L?" 
         bgColor="bg-blue-50"
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -104,7 +104,7 @@ export default function LandingPage() {
 
       {/* How It Works Section */}
       <Section 
-        title="How It Works"
+        title="Cách W2L đồng hành cùng bạn"
         bgColor="bg-white"
       >
         <div className="space-y-8 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-8">
@@ -123,7 +123,7 @@ export default function LandingPage() {
       {/* Footer */}
       <Footer 
         logoSrc="/images/logo.svg"
-        logoText="Write2Learn"
+        logoText="Viết để Học"
         links={footerLinks}
       />
     </div>

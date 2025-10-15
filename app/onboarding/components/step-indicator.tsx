@@ -11,7 +11,7 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
   return (
     <div className="flex items-center justify-between mb-8">
       <div className="text-sm text-gray-500">
-        Step {currentStep} of {totalSteps}
+        Bước {currentStep} / {totalSteps}
       </div>
       <div className="flex-1 mx-4 h-2 bg-gray-200 rounded-full">
         <div

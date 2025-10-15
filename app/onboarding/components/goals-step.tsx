@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { OnboardingHeader } from './onboarding-header';
-import { LEARNING_GOALS, type LearningGoal } from '@/types/onboarding';
+import { LEARNING_GOALS, LEARNING_GOALS_VI, type LearningGoal } from '@/types/onboarding';
 
 interface GoalsStepProps {
   selectedGoals: LearningGoal[];
@@ -13,8 +13,9 @@ export function GoalsStep({ selectedGoals, onToggleGoal }: GoalsStepProps) {
   return (
     <div>
       <OnboardingHeader 
-        title="Your goal"
-        description="What do you want to achieve?"
+        title="Mục tiêu của bạn"
+        description="Bạn muốn đạt được điều gì?"
+        tip="Bạn có thể chọn nhiều mục tiêu. Chúng tôi sẽ tạo nội dung phù hợp với nhu cầu của bạn."
       />
       <div className="grid grid-cols-2 gap-4">
         {LEARNING_GOALS.map((goal) => (
@@ -29,7 +30,7 @@ export function GoalsStep({ selectedGoals, onToggleGoal }: GoalsStepProps) {
           >
             <div className="flex items-center gap-2">
               {getGoalIcon(goal)}
-              {goal}
+              {LEARNING_GOALS_VI[goal]}
             </div>
           </button>
         ))}

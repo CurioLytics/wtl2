@@ -62,7 +62,7 @@ export function OAuthButtons() {
       // so we don't need to handle success here
       
     } catch (err) {
-      setError('Failed to sign in with Google. Please try again.');
+      setError('Đăng nhập bằng Google thất bại. Vui lòng thử lại.');
       console.error('OAuth error:', err);
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_in_progress');
@@ -105,12 +105,12 @@ export function OAuthButtons() {
           />
         </div>
         <span className="text-base sm:text-sm">
-          {isLoading ? 'Connecting...' : 'Continue with Google'}
+          {isLoading ? 'Đang kết nối...' : 'Tiếp tục với Google'}
         </span>
       </Button>
       
       <div className="text-xs text-gray-500 text-center mt-2">
-        By continuing, you agree to our <a href="/terms" className="text-blue-600 hover:underline">Terms of Service</a> and <a href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</a>
+        Bằng cách tiếp tục, bạn đồng ý với <a href="/terms" className="text-blue-600 hover:underline">Điều khoản dịch vụ</a> và <a href="/privacy" className="text-blue-600 hover:underline">Chính sách riêng tư</a> của chúng tôi
       </div>
     </div>
   );

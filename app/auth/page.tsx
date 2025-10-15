@@ -13,7 +13,7 @@ export default function AuthPage() {
       <div className="w-full max-w-md space-y-6 sm:space-y-8">
         <div className="text-center">
           <LogoImage />
-        </div>
+        </div>aaa
         
         <AuthForm />
       </div>

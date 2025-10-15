@@ -19,6 +19,21 @@ export function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [signupComplete, setSignupComplete] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [onboardingMessage, setOnboardingMessage] = useState<string | null>(null);
+
+  // Kiểm tra xem người dùng có vừa hoàn thành onboarding hay không
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Kiểm tra query param onboardingComplete
+      const urlParams = new URLSearchParams(window.location.search);
+      const onboardingComplete = urlParams.get('onboardingComplete');
+      
+      if (onboardingComplete === 'true') {
+        setMode('signup'); // Tự động chuyển sang chế độ đăng ký
+        setOnboardingMessage('Tuyệt vời! Bạn đã hoàn thành các bước khởi đầu. Hãy tạo tài khoản để lưu lại thông tin của bạn.');
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +82,29 @@ export function AuthForm() {
         } else if (data?.user) {
           setUser(data.user);
           setSignupComplete(true);
+          
+          // Nếu có thông tin onboarding từ session, gửi lên server sau khi đăng ký thành công
+          if (typeof window !== 'undefined') {
+            const onboardingData = sessionStorage.getItem('onboardingProfile');
+            if (onboardingData) {
+              try {
+                // Lưu thông tin onboarding vào database
+                await fetch('/api/profile', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-Request-ID': `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
+                  },
+                  body: onboardingData,
+                });
+                
+                // Xóa dữ liệu khỏi session sau khi đã lưu
+                sessionStorage.removeItem('onboardingProfile');
+              } catch (apiError) {
+                console.error('Không thể lưu thông tin onboarding:', apiError);
+              }
+            }
+          }
         }
       }
     } catch (err) {
@@ -84,13 +122,18 @@ export function AuthForm() {
     <div className="w-full max-w-md mx-auto space-y-6">
       <div className="text-center">
         <h2 className="text-xl sm:text-2xl font-bold">
-          {mode === 'signin' ? 'Welcome back' : 'Create an account'}
+          {mode === 'signin' ? 'Chào mừng trở lại' : 'Tạo tài khoản'}
         </h2>
         <p className="text-gray-600 mt-2 text-sm sm:text-base">
           {mode === 'signin'
-            ? 'Sign in to continue to your account'
-            : 'Sign up to get started'}
+            ? 'Đăng nhập để tiếp tục với tài khoản của bạn'
+            : 'Đăng ký để bắt đầu'}
         </p>
+        {onboardingMessage && (
+          <div className="mt-4 p-3 bg-green-50 text-green-800 rounded-md text-sm">
+            {onboardingMessage}
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
