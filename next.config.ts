@@ -6,10 +6,7 @@ const nextConfig: NextConfig = {
     // TODO: Re-enable and fix type errors systematically
     ignoreBuildErrors: true,
   },
-  eslint: {
-    // Disable ESLint during build
-    ignoreDuringBuilds: true,
-  },
+
   // Thêm cấu hình images
   images: {
     // Thêm các tên miền bên ngoài vào mảng remotePatterns
