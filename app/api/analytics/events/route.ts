@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const startDateParam = searchParams.get('startDate');
     const endDateParam = searchParams.get('endDate');
+    const timezoneOffsetParam = searchParams.get('timezoneOffset');
     const includeToday = searchParams.get('includeToday') !== 'false';
 
     // Default to last 7 days
@@ -25,11 +26,13 @@ export async function GET(request: NextRequest) {
     const startDate = startDateParam 
       ? new Date(startDateParam)
       : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const timezoneOffset = timezoneOffsetParam ? parseInt(timezoneOffsetParam) : undefined;
 
     const summary = await analyticsService.getAnalyticsSummary(
       user.id,
       startDate,
-      endDate
+      endDate,
+      timezoneOffset
     );
 
     return createSuccessResponse(summary);
@@ -45,10 +48,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await authenticateUser();
-    const { date } = await request.json();
+    const { date, timezoneOffset } = await request.json();
     
     const targetDate = date ? new Date(date) : new Date();
-    const dailyGoal = await analyticsService.getDailyGoalStatus(user.id, targetDate);
+    const dailyGoal = await analyticsService.getDailyGoalStatus(
+      user.id, 
+      targetDate,
+      timezoneOffset
+    );
 
     return createSuccessResponse({ dailyGoal });
   } catch (error) {

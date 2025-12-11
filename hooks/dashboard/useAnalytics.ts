@@ -33,9 +33,13 @@ export function useAnalytics({
       setIsLoading(true);
       setError(null);
 
+      // Get client's timezone offset in minutes (e.g., -420 for UTC+7)
+      const timezoneOffset = new Date().getTimezoneOffset();
+
       const params = new URLSearchParams({
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
+        timezoneOffset: timezoneOffset.toString(),
       });
 
       console.log('[useAnalytics] Fetching:', params.toString());

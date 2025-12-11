@@ -51,7 +51,12 @@ export default function ReportPage() {
 
       setIsLoadingCalendar(true);
       try {
-        const response = await fetch('/api/analytics/monthly-goals');
+        const timezoneOffset = new Date().getTimezoneOffset();
+        const params = new URLSearchParams({
+          timezoneOffset: timezoneOffset.toString(),
+        });
+        
+        const response = await fetch(`/api/analytics/monthly-goals?${params}`);
         const result = await response.json();
 
         if (result.success && result.data?.goalStatuses) {

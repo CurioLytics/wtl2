@@ -15,11 +15,17 @@ export async function GET(request: NextRequest) {
     
     const searchParams = request.nextUrl.searchParams;
     const monthParam = searchParams.get('month');
+    const timezoneOffsetParam = searchParams.get('timezoneOffset');
     
     // Default to current month
     const month = monthParam ? new Date(monthParam) : new Date();
+    const timezoneOffset = timezoneOffsetParam ? parseInt(timezoneOffsetParam) : undefined;
     
-    const goalStatuses = await analyticsService.getMonthlyGoalStatuses(user.id, month);
+    const goalStatuses = await analyticsService.getMonthlyGoalStatuses(
+      user.id, 
+      month,
+      timezoneOffset
+    );
     
     // Convert Map to Object for JSON serialization
     const goalStatusesObject = Object.fromEntries(goalStatuses);

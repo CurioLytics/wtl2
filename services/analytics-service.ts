@@ -28,20 +28,29 @@ export class AnalyticsService {
 
   /**
    * Get today's goal completion status
+   * @param profileId - User profile ID
+   * @param date - Target date (defaults to today)
+   * @param timezoneOffset - Client timezone offset in minutes (e.g., -420 for UTC+7)
    */
-  async getDailyGoalStatus(profileId: string, date?: Date): Promise<DailyGoalStatus> {
+  async getDailyGoalStatus(profileId: string, date?: Date, timezoneOffset?: number): Promise<DailyGoalStatus> {
     try {
       const supabase = await this.getSupabaseClient();
       const targetDate = date || new Date();
 
-      // Get the date string in YYYY-MM-DD format (local timezone)
-      const year = targetDate.getFullYear();
-      const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-      const day = String(targetDate.getDate()).padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
+      // Get the date string in user's local timezone
+      let dateString: string;
+      if (timezoneOffset !== undefined) {
+        // Adjust for user's timezone offset
+        const localTime = new Date(targetDate.getTime() - (timezoneOffset * 60000));
+        dateString = localTime.toISOString().split('T')[0];
+      } else {
+        // Fallback: use ISO date (will be UTC)
+        dateString = targetDate.toISOString().split('T')[0];
+      }
 
       console.log('[getDailyGoalStatus] Date range:', {
         targetDate: targetDate.toISOString(),
+        timezoneOffset,
         dateString,
         profileId
       });
@@ -66,13 +75,13 @@ export class AnalyticsService {
       const profile = profileResult.data;
       const allEvents = eventsResult.data || [];
 
-      // Filter events by local date string
+      // Filter events by date string extracted from ISO timestamp
+      // This preserves the original timezone from the database
       const events = allEvents.filter((event: any) => {
-        const eventDate = new Date(event.created_at);
-        const eventYear = eventDate.getFullYear();
-        const eventMonth = String(eventDate.getMonth() + 1).padStart(2, '0');
-        const eventDay = String(eventDate.getDate()).padStart(2, '0');
-        const eventDateString = `${eventYear}-${eventMonth}-${eventDay}`;
+        // Extract YYYY-MM-DD from timestamp like "2025-12-11 06:20:44.961921+07"
+        // The database timestamp includes timezone, so we extract the local date portion
+        const timestamp = event.created_at;
+        const eventDateString = timestamp.split(' ')[0]; // Get "2025-12-11" part
         return eventDateString === dateString;
       });
 
@@ -120,7 +129,8 @@ export class AnalyticsService {
   async getWeeklyActivity(
     profileId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    timezoneOffset?: number
   ): Promise<WeeklyActivityData[]> {
     try {
       const supabase = await this.getSupabaseClient();
@@ -136,13 +146,10 @@ export class AnalyticsService {
       // Group by date and event type
       const activityMap = new Map<string, WeeklyActivityData>();
 
-      // Initialize all dates in range with zero counts using local dates
+      // Initialize all dates in range with zero counts
       const currentDate = new Date(startDate);
       while (currentDate <= endDate) {
-        const year = currentDate.getFullYear();
-        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-        const day = String(currentDate.getDate()).padStart(2, '0');
-        const dateKey = `${year}-${month}-${day}`;
+        const dateKey = currentDate.toISOString().split('T')[0];
         activityMap.set(dateKey, {
           date: dateKey,
           vocab_created: 0,
@@ -153,13 +160,11 @@ export class AnalyticsService {
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
-      // Count events per day using local date conversion
+      // Count events per day by extracting date from timestamp string
       (data as any)?.forEach((event: any) => {
-        const eventDate = new Date(event.created_at);
-        const year = eventDate.getFullYear();
-        const month = String(eventDate.getMonth() + 1).padStart(2, '0');
-        const day = String(eventDate.getDate()).padStart(2, '0');
-        const dateKey = `${year}-${month}-${day}`;
+        // Extract YYYY-MM-DD from timestamp like "2025-12-11 06:20:44.961921+07"
+        const timestamp = event.created_at;
+        const dateKey = timestamp.split(' ')[0]; // Get "2025-12-11" part
         const dayData = activityMap.get(dateKey);
         if (dayData && event.event_type !== 'session_active') {
           (dayData as any)[event.event_type]++;
@@ -368,13 +373,15 @@ export class AnalyticsService {
    */
   async getMonthlyGoalStatuses(
     profileId: string,
-    month: Date
+    month: Date,
+    timezoneOffset?: number
   ): Promise<Map<string, DailyGoalStatus>> {
     try {
       const supabase = await this.getSupabaseClient();
 
       console.log('[getMonthlyGoalStatuses] Fetching for month:', {
         month: month.toISOString(),
+        timezoneOffset,
         profileId
       });
 
@@ -398,24 +405,28 @@ export class AnalyticsService {
       const profile = profileResult.data;
       const allEvents = eventsResult.data || [];
 
-      // Get month boundaries using local time
-      const targetYear = month.getFullYear();
-      const targetMonth = month.getMonth();
+      // Get target month string in YYYY-MM format (adjusted for timezone)
+      let targetMonthString: string;
+      if (timezoneOffset !== undefined) {
+        const localTime = new Date(month.getTime() - (timezoneOffset * 60000));
+        targetMonthString = localTime.toISOString().substring(0, 7);
+      } else {
+        targetMonthString = month.toISOString().substring(0, 7);
+      }
 
-      // Group events by date using local timezone
+      // Group events by date using timestamp string extraction
       const eventsByDate = new Map<string, { [key: string]: number }>();
 
       allEvents.forEach((event: any) => {
-        const eventDate = new Date(event.created_at);
-        const eventYear = eventDate.getFullYear();
-        const eventMonth = eventDate.getMonth();
+        // Extract YYYY-MM-DD from timestamp like "2025-12-11 06:20:44.961921+07"
+        const timestamp = event.created_at;
+        const dateKey = timestamp.split(' ')[0]; // Get "2025-12-11" part
+        const eventMonthString = dateKey.substring(0, 7); // Get "2025-12" part
         
         // Only include events from the target month
-        if (eventYear !== targetYear || eventMonth !== targetMonth) {
+        if (eventMonthString !== targetMonthString) {
           return;
         }
-
-        const dateKey = `${eventYear}-${String(eventMonth + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
 
         if (!eventsByDate.has(dateKey)) {
           eventsByDate.set(dateKey, {});
@@ -461,12 +472,13 @@ export class AnalyticsService {
   async getAnalyticsSummary(
     profileId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    timezoneOffset?: number
   ): Promise<AnalyticsSummary> {
     try {
       const [dailyGoal, weeklyActivity, grammarErrors, streak] = await Promise.all([
-        this.getDailyGoalStatus(profileId),
-        this.getWeeklyActivity(profileId, startDate, endDate),
+        this.getDailyGoalStatus(profileId, undefined, timezoneOffset),
+        this.getWeeklyActivity(profileId, startDate, endDate, timezoneOffset),
         this.getGrammarErrorSummary(profileId, startDate, endDate),
         this.getStreak(profileId),
       ]);
