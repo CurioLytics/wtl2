@@ -28,88 +28,80 @@ export class AnalyticsService {
 
   /**
    * Get today's goal completion status
-   * @param profileId - User profile ID
-   * @param date - Target date (defaults to today)
-   * @param timezoneOffset - Client timezone offset in minutes (e.g., -420 for UTC+7)
+   * 
+   * Algorithm:
+   * 1. Calculate target date in user's timezone
+   * 2. Parallel fetch: profile goals + today's events (filtered at DB)
+   * 3. Client-side date filtering for timezone precision
+   * 4. Single-pass event aggregation by type
+   * 5. Construct response with goal progress
+   * Complexity: O(m) where m = events on target date (typically small)
    */
   async getDailyGoalStatus(profileId: string, date?: Date, timezoneOffset?: number): Promise<DailyGoalStatus> {
     try {
       const supabase = await this.getSupabaseClient();
       const targetDate = date || new Date();
 
-      // Get the date string in user's local timezone
+      // Calculate date string in user's local timezone
       let dateString: string;
       if (timezoneOffset !== undefined) {
-        // Adjust for user's timezone offset
         const localTime = new Date(targetDate.getTime() - (timezoneOffset * 60000));
         dateString = localTime.toISOString().split('T')[0];
       } else {
-        // Fallback: use ISO date (will be UTC)
         dateString = targetDate.toISOString().split('T')[0];
       }
 
-      console.log('[getDailyGoalStatus] Date range:', {
-        targetDate: targetDate.toISOString(),
-        timezoneOffset,
-        dateString,
-        profileId
-      });
+      // Calculate DB query range (full day + buffer for timezone differences)
+      const dayStart = new Date(dateString + 'T00:00:00Z');
+      const dayEnd = new Date(dateString + 'T23:59:59Z');
+      const bufferStart = new Date(dayStart.getTime() - 43200000).toISOString(); // -12h buffer
+      const bufferEnd = new Date(dayEnd.getTime() + 43200000).toISOString();     // +12h buffer
 
-      // Fetch user's goal settings from profile and today's events in parallel
+      // OPTIMIZATION: Parallel fetch + DB-level date filtering
       const [profileResult, eventsResult] = await Promise.all([
         (supabase as any)
           .from('profiles')
           .select('daily_review_goal, daily_roleplay_goal, daily_journal_goal')
           .eq('id', profileId)
-          .maybeSingle(),
+          .single(),
         (supabase as any)
           .from('learning_events')
           .select('event_type, created_at')
           .eq('profile_id', profileId)
           .neq('event_type', 'session_active')
+          .gte('created_at', bufferStart)
+          .lte('created_at', bufferEnd)
       ]);
 
       if (profileResult.error) throw profileResult.error;
       if (eventsResult.error) throw eventsResult.error;
 
       const profile = profileResult.data;
-      const allEvents = eventsResult.data || [];
-
-      // Filter events by date string extracted from ISO timestamp
-      // This preserves the original timezone from the database
-      const events = allEvents.filter((event: any) => {
-        // Extract YYYY-MM-DD from timestamp like "2025-12-11 06:20:44.961921+07"
-        // The database timestamp includes timezone, so we extract the local date portion
-        const timestamp = event.created_at;
-        const eventDateString = timestamp.split(' ')[0]; // Get "2025-12-11" part
-        return eventDateString === dateString;
-      });
-
-      console.log('[getDailyGoalStatus] Profile goals:', profile);
-      console.log('[getDailyGoalStatus] All events:', allEvents?.length);
-      console.log('[getDailyGoalStatus] Events for', dateString, ':', events?.length, events);
-
-      // Count each event type
-      const eventCounts = (events as any)?.reduce((acc: any, e: any) => {
-        acc[e.event_type] = (acc[e.event_type] || 0) + 1;
-        return acc;
-      }, {}) || {};
-
-      console.log('[getDailyGoalStatus] Event counts:', eventCounts);
+      
+      // Client-side precision filtering and aggregation (O(m))
+      const eventCounts: Record<string, number> = {};
+      if (eventsResult.data?.length) {
+        for (const event of eventsResult.data) {
+          const eventDateString = event.created_at.split('T')[0];
+          if (eventDateString === dateString) {
+            eventCounts[event.event_type] = (eventCounts[event.event_type] || 0) + 1;
+          }
+        }
+      }
 
       return {
-        date: targetDate.toISOString().split('T')[0],
+        date: dateString,
         vocab_created: {
           completed: eventCounts['vocab_created'] || 0,
-          target: profile?.daily_review_goal || 10, // default 10 if not set
+          target: profile?.daily_review_goal || 10,
         },
         journal_created: {
           completed: eventCounts['journal_created'] || 0,
-          target: profile?.daily_journal_goal || 1, // default 1 if not set
+          target: profile?.daily_journal_goal || 1,
         },
         roleplay_completed: {
           completed: eventCounts['roleplay_completed'] || 0,
-          target: profile?.daily_roleplay_goal || 1, // default 1 if not set
+          target: profile?.daily_roleplay_goal || 1,
         },
       };
     } catch (error) {
@@ -124,7 +116,15 @@ export class AnalyticsService {
   }
 
   /**
-   * Get weekly activity data (7 days by default)
+   * Get weekly activity data (optimized with date filtering at DB level)
+   * 
+   * Algorithm:
+   * 1. Calculate date range boundaries (start of startDate to end of endDate)
+   * 2. Query DB with date filter to minimize data transfer
+   * 3. Pre-allocate Map with all dates in range (O(n) where n = days)
+   * 4. Single-pass aggregation of events into Map (O(m) where m = events)
+   * 5. Convert to sorted array
+   * Total: O(n + m) - linear time complexity
    */
   async getWeeklyActivity(
     profileId: string,
@@ -134,19 +134,25 @@ export class AnalyticsService {
   ): Promise<WeeklyActivityData[]> {
     try {
       const supabase = await this.getSupabaseClient();
+      
+      // Extend date range to capture full days in user's timezone
+      const startISO = new Date(startDate.getTime() - 86400000).toISOString(); // -1 day buffer
+      const endISO = new Date(endDate.getTime() + 86400000).toISOString();     // +1 day buffer
+      
+      // OPTIMIZATION: Filter at database level to reduce data transfer
       const { data, error } = await (supabase as any)
         .from('learning_events')
         .select('event_type, created_at')
         .eq('profile_id', profileId)
         .neq('event_type', 'session_active')
+        .gte('created_at', startISO)
+        .lte('created_at', endISO)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
 
-      // Group by date and event type
+      // Pre-allocate Map with all dates (O(n) where n = number of days)
       const activityMap = new Map<string, WeeklyActivityData>();
-
-      // Initialize all dates in range with zero counts
       const currentDate = new Date(startDate);
       while (currentDate <= endDate) {
         const dateKey = currentDate.toISOString().split('T')[0];
@@ -160,18 +166,18 @@ export class AnalyticsService {
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
-      // Count events per day by extracting date from timestamp string
-      (data as any)?.forEach((event: any) => {
-        // Extract YYYY-MM-DD from timestamp like "2025-12-11 06:20:44.961921+07"
-        const timestamp = event.created_at;
-        const dateKey = timestamp.split(' ')[0]; // Get "2025-12-11" part
-        const dayData = activityMap.get(dateKey);
-        if (dayData && event.event_type !== 'session_active') {
-          (dayData as any)[event.event_type]++;
+      // Single-pass aggregation (O(m) where m = filtered events)
+      if (data?.length) {
+        for (const event of data) {
+          const dateKey = event.created_at.split('T')[0];
+          const dayData = activityMap.get(dateKey);
+          if (dayData) {
+            (dayData as any)[event.event_type] = ((dayData as any)[event.event_type] || 0) + 1;
+          }
         }
-      });
+      }
 
-      return Array.from(activityMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+      return Array.from(activityMap.values());
     } catch (error) {
       console.error('Error fetching weekly activity:', error);
       return [];
@@ -369,7 +375,14 @@ export class AnalyticsService {
   }
 
   /**
-   * Get daily goal statuses for a month (for calendar view)
+   * Get daily goal statuses for a month (optimized for calendar view)
+   * 
+   * Algorithm:
+   * 1. Calculate month boundaries in user's timezone
+   * 2. Parallel fetch: profile goals + month's events (DB-filtered)
+   * 3. Single-pass grouping by date with Map (O(m))
+   * 4. Convert to goal status objects (O(d) where d = days with events)
+   * Total: O(m + d) - much faster than fetching all events
    */
   async getMonthlyGoalStatuses(
     profileId: string,
@@ -379,33 +392,7 @@ export class AnalyticsService {
     try {
       const supabase = await this.getSupabaseClient();
 
-      console.log('[getMonthlyGoalStatuses] Fetching for month:', {
-        month: month.toISOString(),
-        timezoneOffset,
-        profileId
-      });
-
-      // Fetch profile goals and all events (will filter client-side)
-      const [profileResult, eventsResult] = await Promise.all([
-        (supabase as any)
-          .from('profiles')
-          .select('daily_review_goal, daily_roleplay_goal, daily_journal_goal')
-          .eq('id', profileId)
-          .maybeSingle(),
-        (supabase as any)
-          .from('learning_events')
-          .select('event_type, created_at')
-          .eq('profile_id', profileId)
-          .neq('event_type', 'session_active')
-      ]);
-
-      if (profileResult.error) throw profileResult.error;
-      if (eventsResult.error) throw eventsResult.error;
-
-      const profile = profileResult.data;
-      const allEvents = eventsResult.data || [];
-
-      // Get target month string in YYYY-MM format (adjusted for timezone)
+      // Calculate month range
       let targetMonthString: string;
       if (timezoneOffset !== undefined) {
         const localTime = new Date(month.getTime() - (timezoneOffset * 60000));
@@ -414,32 +401,54 @@ export class AnalyticsService {
         targetMonthString = month.toISOString().substring(0, 7);
       }
 
-      // Group events by date using timestamp string extraction
-      const eventsByDate = new Map<string, { [key: string]: number }>();
+      // Calculate DB query range (first to last day of month + buffer)
+      const monthStart = new Date(targetMonthString + '-01T00:00:00Z');
+      const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59);
+      const bufferStart = new Date(monthStart.getTime() - 86400000).toISOString(); // -1 day
+      const bufferEnd = new Date(monthEnd.getTime() + 86400000).toISOString();     // +1 day
 
-      allEvents.forEach((event: any) => {
-        // Extract YYYY-MM-DD from timestamp like "2025-12-11 06:20:44.961921+07"
-        const timestamp = event.created_at;
-        const dateKey = timestamp.split(' ')[0]; // Get "2025-12-11" part
-        const eventMonthString = dateKey.substring(0, 7); // Get "2025-12" part
-        
-        // Only include events from the target month
-        if (eventMonthString !== targetMonthString) {
-          return;
+      // OPTIMIZATION: Parallel fetch + DB-level date filtering
+      const [profileResult, eventsResult] = await Promise.all([
+        (supabase as any)
+          .from('profiles')
+          .select('daily_review_goal, daily_roleplay_goal, daily_journal_goal')
+          .eq('id', profileId)
+          .single(),
+        (supabase as any)
+          .from('learning_events')
+          .select('event_type, created_at')
+          .eq('profile_id', profileId)
+          .neq('event_type', 'session_active')
+          .gte('created_at', bufferStart)
+          .lte('created_at', bufferEnd)
+      ]);
+
+      if (profileResult.error) throw profileResult.error;
+      if (eventsResult.error) throw eventsResult.error;
+
+      const profile = profileResult.data;
+      const eventsByDate = new Map<string, Record<string, number>>();
+
+      // Single-pass grouping and aggregation (O(m))
+      if (eventsResult.data?.length) {
+        for (const event of eventsResult.data) {
+          const dateKey = event.created_at.split('T')[0];
+          const eventMonthString = dateKey.substring(0, 7);
+          
+          // Client-side precision filtering
+          if (eventMonthString === targetMonthString) {
+            if (!eventsByDate.has(dateKey)) {
+              eventsByDate.set(dateKey, {});
+            }
+            const dayCounts = eventsByDate.get(dateKey)!;
+            dayCounts[event.event_type] = (dayCounts[event.event_type] || 0) + 1;
+          }
         }
+      }
 
-        if (!eventsByDate.has(dateKey)) {
-          eventsByDate.set(dateKey, {});
-        }
-
-        const dayCounts = eventsByDate.get(dateKey)!;
-        dayCounts[event.event_type] = (dayCounts[event.event_type] || 0) + 1;
-      });
-
-      // Create goal statuses for each date
+      // Convert to goal statuses (O(d))
       const goalStatuses = new Map<string, DailyGoalStatus>();
-
-      eventsByDate.forEach((counts, dateKey) => {
+      for (const [dateKey, counts] of eventsByDate) {
         goalStatuses.set(dateKey, {
           date: dateKey,
           vocab_created: {
@@ -455,9 +464,7 @@ export class AnalyticsService {
             target: profile?.daily_roleplay_goal || 1,
           },
         });
-      });
-
-      console.log('[getMonthlyGoalStatuses] Generated statuses for', goalStatuses.size, 'days');
+      }
 
       return goalStatuses;
     } catch (error) {

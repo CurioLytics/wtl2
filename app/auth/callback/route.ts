@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { Database } from '@/types/database.types';
@@ -7,7 +7,7 @@ type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
 
 // Helper function to create a profile if one doesn't exist
 async function ensureProfileExists(
-  supabase: ReturnType<typeof createRouteHandlerClient<Database>>,
+  supabase: ReturnType<typeof createServerClient<Database>>,
   userId: string,
   userEmail: string | undefined
 ) {
@@ -64,8 +64,29 @@ async function ensureProfileExists(
 
 export async function GET(req: NextRequest) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStore });
+    const cookieStore = await cookies();
+    
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) => {
+                cookieStore.set(name, value, options);
+              });
+            } catch {
+              // Handle error silently - cookies may be set in middleware
+            }
+          },
+        },
+      }
+    );
+    
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
     const error = searchParams.get('error');
@@ -107,8 +128,9 @@ export async function GET(req: NextRequest) {
       
       if (exchangeError) {
         console.error('Session exchange error:', exchangeError);
+        console.error('Error details:', JSON.stringify(exchangeError, null, 2));
         return NextResponse.redirect(
-          new URL(`/auth?error=${encodeURIComponent('Failed to complete authentication')}&provider=${provider}`, req.url)
+          new URL(`/auth?error=${encodeURIComponent(exchangeError.message || 'Failed to complete authentication')}&provider=${provider}`, req.url)
         );
       }
       
