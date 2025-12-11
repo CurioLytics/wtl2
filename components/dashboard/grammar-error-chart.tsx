@@ -8,6 +8,10 @@ import { GrammarErrorSummary } from '@/types/analytics';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { PracticeDialog } from '@/app/report/components/PracticeDialog';
 import { ErrorData } from '@/types/exercise';
+import { useUserProfileStore } from '@/stores/user-profile-store';
+import { QuizDialog } from '@/components/quiz/quiz-dialog';
+import { QuizQuestion } from '@/types/quiz';
+import { FeedbackLoadingScreen } from '@/components/roleplay/feedback-loading-screen';
 
 interface GrammarErrorChartProps {
   data: GrammarErrorSummary[];
@@ -31,6 +35,12 @@ export function GrammarErrorChart({ data, isLoading }: GrammarErrorChartProps) {
   const [isPracticeOpen, setIsPracticeOpen] = useState(false);
   const [selectedErrorData, setSelectedErrorData] = useState<ErrorData[]>([]);
   const [grammarTopics, setGrammarTopics] = useState<Record<string, string[]>>({});
+  const [practiceLoading, setPracticeLoading] = useState<string | null>(null);
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [currentTopicName, setCurrentTopicName] = useState<string>('');
+  const [quizSources, setQuizSources] = useState<string>('');
+  const profile = useUserProfileStore((state) => state.profile);
 
   const handlePracticeClick = () => {
     // Build topics structure: { topic_name: [tags] }
@@ -80,6 +90,86 @@ export function GrammarErrorChart({ data, isLoading }: GrammarErrorChartProps) {
     setSelectedErrorData(errorData);
     setIsPracticeOpen(true);
   };
+
+  const loadQuizQuestions = async (topicName: string) => {
+    if (!profile?.english_level) {
+      console.error('User english_level not available');
+      return;
+    }
+
+    setPracticeLoading(topicName);
+    setIsQuizOpen(true); // Open dialog immediately to show loading
+
+    try {
+      console.log('Sending practice request:', {
+        english_level: profile.english_level,
+        topic_name: topicName,
+      });
+
+      const response = await fetch('/api/exercises/topic', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          english_level: profile.english_level,
+          topic_name: topicName,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Webhook response:', data);
+
+      // Extract questions from webhook response
+      // Handle both possible structures:
+      // Structure 1: { output: { questions: [...], source: "..." } }
+      // Structure 2: [{ output: { questions: [...], source: "..." } }]
+      let questions: any[] = [];
+      let sources: string = '';
+      
+      if (data?.output?.questions && Array.isArray(data.output.questions)) {
+        // Direct object with output property
+        questions = data.output.questions;
+        sources = data.output.source || '';
+      } else if (Array.isArray(data) && data.length > 0 && data[0]?.output?.questions) {
+        // Array containing object with output property
+        questions = data[0].output.questions;
+        sources = data[0].output.source || '';
+      }
+
+      if (questions.length > 0) {
+        setQuizQuestions(questions);
+        setQuizSources(sources);
+        setIsQuizOpen(true);
+      } else {
+        console.error('Invalid response structure:', data);
+        // TODO: Show error toast
+      }
+    } catch (error) {
+      console.error('Error sending practice request:', error);
+      // TODO: Show error toast
+    } finally {
+      setPracticeLoading(null);
+    }
+  };
+
+  const handlePracticeNow = async (topicName: string) => {
+    setCurrentTopicName(topicName);
+    await loadQuizQuestions(topicName);
+  };
+
+  const handleRetryQuiz = async () => {
+    if (currentTopicName) {
+      setIsQuizOpen(false); // Close current quiz first
+      await loadQuizQuestions(currentTopicName);
+    }
+  };
+
+
 
   if (isLoading) {
     return (
@@ -238,7 +328,7 @@ export function GrammarErrorChart({ data, isLoading }: GrammarErrorChartProps) {
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="pl-6 space-y-2">
+                <div className="pl-6 space-y-3">
                   {error.recent_errors.length > 0 ? (
                     <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                       {error.recent_errors.map((desc, idx) => (
@@ -248,6 +338,16 @@ export function GrammarErrorChart({ data, isLoading }: GrammarErrorChartProps) {
                   ) : (
                     <p className="text-sm text-muted-foreground">No error details available</p>
                   )}
+
+                  <Button
+                    onClick={() => handlePracticeNow(error.topic_name)}
+                    disabled={practiceLoading === error.topic_name || !profile?.english_level}
+                    size="sm"
+                    variant="outline"
+                    className="mt-2"
+                  >
+                    {practiceLoading === error.topic_name ? 'Đang xử lý...' : 'Ôn tập ngay'}
+                  </Button>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -260,6 +360,17 @@ export function GrammarErrorChart({ data, isLoading }: GrammarErrorChartProps) {
         onClose={() => setIsPracticeOpen(false)}
         errorData={selectedErrorData}
         grammarTopics={grammarTopics}
+      />
+
+      <QuizDialog
+        isOpen={isQuizOpen}
+        onClose={() => setIsQuizOpen(false)}
+        questions={quizQuestions}
+        topicName={currentTopicName}
+        sources={quizSources}
+        onRetry={handleRetryQuiz}
+        isLoading={!!practiceLoading}
+        loadingSteps={['Đang tìm nguồn', 'Đang lọc câu hỏi theo level', 'Đang tạo giải thích']}
       />
     </Card>
   );

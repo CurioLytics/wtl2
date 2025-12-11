@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser, handleApiError, createSuccessResponse } from '@/utils/api-helpers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/services/supabase/server';
 
 /**
  * POST /api/vocabulary/words/[wordId]/star
@@ -20,8 +19,7 @@ export async function POST(
     }
 
     // Use server-side Supabase client with authenticated user
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createClient();
 
     // Get current starred status
     const { data: currentData } = await supabase

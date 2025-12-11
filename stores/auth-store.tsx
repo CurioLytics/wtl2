@@ -2,7 +2,7 @@
 
 import { createContext, useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/services/supabase/client';
 import { getCurrentUser, signOut as authSignOut } from '@/services/auth-service';
 import { AuthContextType } from '@/hooks/auth/use-auth';
 import { useUserProfileStore } from '@/stores/user-profile-store';
@@ -16,7 +16,7 @@ export interface UserPreferences {
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  signOut: async () => {},
+  signOut: async () => { },
   onboardingCompleted: false,
   userPreferences: null,
 });
@@ -31,16 +31,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Track mounted state to prevent state updates after unmount
     let mounted = true;
-    
+
     const checkUser = async () => {
       try {
         const { user, error } = await getCurrentUser();
-        
+
         // Only continue if component is still mounted
         if (!mounted) return;
-        
+
         if (user) {
-          const supabase = createClientComponentClient();
+          const supabase = createClient();
           const { data: profile } = await supabase
             .from('profiles')
             .select('onboarding_completed, name, english_level, style')
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               english_level: profile?.english_level || null,
               style: profile?.style || null,
             });
-            
+
             // Cache full profile data including goals
             await fetchProfile(user.id);
           }
@@ -75,16 +75,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Initial auth check
     checkUser();
-    
+
     // Set up auth state subscription
-    const supabase = createClientComponentClient();
+    const supabase = createClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return;
-        
+
         // Update user state when auth state changes
         setUser(session?.user || null);
-        
+
         // Check onboarding status and preferences if user exists
         if (session?.user) {
           (async () => {
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               .select('onboarding_completed, name, english_level, style')
               .eq('id', session.user.id)
               .single();
-              
+
             if (mounted) {
               setOnboardingCompleted(Boolean(profile?.onboarding_completed));
               setUserPreferences({
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 english_level: profile?.english_level || null,
                 style: profile?.style || null,
               });
-              
+
               // Cache full profile data including goals
               await fetchProfile(session.user.id);
             }

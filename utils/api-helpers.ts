@@ -1,5 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/services/supabase/server';
 import { NextResponse } from 'next/server';
 
 /**
@@ -16,15 +15,14 @@ export interface UserPreferences {
  * Throws error if user is not authenticated
  */
 export async function authenticateUser() {
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-  
+  const supabase = await createClient();
+
   const { data: { user }, error: authError } = await supabase.auth.getUser();
-  
+
   if (authError || !user) {
     throw new Error('Unauthorized');
   }
-  
+
   return user;
 }
 
@@ -33,21 +31,21 @@ export async function authenticateUser() {
  */
 export function handleApiError(error: unknown) {
   console.error('API Error:', error);
-  
+
   if (error instanceof Error) {
     if (error.message === 'Unauthorized') {
       return NextResponse.json(
-        { error: 'Unauthorized' }, 
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
-    
+
     return NextResponse.json(
-      { error: error.message }, 
+      { error: error.message },
       { status: 400 }
     );
   }
-  
+
   return NextResponse.json(
     { error: 'Internal Server Error' },
     { status: 500 }
@@ -82,15 +80,14 @@ export function createSuccessResponse(data: any, message?: string) {
  * Default: { name: "User", english_level: "intermediate", style: "conversational" }
  */
 export async function getUserPreferences(userId: string): Promise<UserPreferences> {
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-  
+  const supabase = await createClient();
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('name, english_level, style')
     .eq('id', userId)
     .single();
-  
+
   return {
     name: profile?.name || 'User',
     english_level: profile?.english_level || 'intermediate',

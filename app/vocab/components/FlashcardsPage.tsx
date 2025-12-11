@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/services/supabase/client';
 import type { Database } from '@/types/database.types';
 // Note: Database types need to be regenerated after table rename
 // For now, using a generic type until types are updated
@@ -14,7 +14,7 @@ type VocabularyRow = {
   set_id: string;
 };
 
-const supabase = createClientComponentClient<Database>();
+const supabase = createClient();
 
 type CardRow = {
   vocabulary_id: string;
@@ -45,7 +45,7 @@ type ReviewResult = {
 
 export default function FlashcardsPage() {
   const params = useParams(); // { setId: '...' }
-  const setId = params?.setId as string ;
+  const setId = params?.setId as string;
 
   const [cards, setCards] = useState<FlatCard[]>([]);
   const [index, setIndex] = useState(0);
@@ -56,46 +56,46 @@ export default function FlashcardsPage() {
   const [lastResult, setLastResult] = useState<ReviewResult | null>(null);
 
   useEffect(() => {
-  if (!setId) {
-    setError('Missing setId in route parameters.');
-    setFetching(false);
-    return;
-  }
-
-  let mounted = true;
-  async function loadDueCards() {
-    setFetching(true);
-    setError(null);
-
-    const now = new Date().toISOString();
-    console.log('[DEBUG] Fetching cards for setId:', setId, 'at', now);
-
-    // 1️⃣ Get all vocabulary IDs in that set
-    const { data: vocabularyWords, error: fcErr } = await supabase
-      .from('vocabulary')
-      .select('id')
-      .eq('set_id', setId);
-
-    if (fcErr) {
-      console.error('🔴 Supabase vocabulary fetch failed:', fcErr);
-      setError(`Supabase error: ${fcErr.message}`);
+    if (!setId) {
+      setError('Missing setId in route parameters.');
       setFetching(false);
       return;
     }
 
-    if (!vocabularyWords?.length) {
-      setError(`No vocabulary words found for set ${setId}`);
-      setFetching(false);
-      return;
-    }
+    let mounted = true;
+    async function loadDueCards() {
+      setFetching(true);
+      setError(null);
 
-    // ✅ Map vocabulary IDs for querying status
-    const vocabularyIds = vocabularyWords.map((v: {id: string}) => v.id);
+      const now = new Date().toISOString();
+      console.log('[DEBUG] Fetching cards for setId:', setId, 'at', now);
 
-    // 2️⃣ Get their statuses (joined with vocabulary info)
-    const { data, error: supaErr } = await supabase
-      .from('vocabulary_status')
-      .select(`
+      // 1️⃣ Get all vocabulary IDs in that set
+      const { data: vocabularyWords, error: fcErr } = await supabase
+        .from('vocabulary')
+        .select('id')
+        .eq('set_id', setId);
+
+      if (fcErr) {
+        console.error('🔴 Supabase vocabulary fetch failed:', fcErr);
+        setError(`Supabase error: ${fcErr.message}`);
+        setFetching(false);
+        return;
+      }
+
+      if (!vocabularyWords?.length) {
+        setError(`No vocabulary words found for set ${setId}`);
+        setFetching(false);
+        return;
+      }
+
+      // ✅ Map vocabulary IDs for querying status
+      const vocabularyIds = vocabularyWords.map((v: { id: string }) => v.id);
+
+      // 2️⃣ Get their statuses (joined with vocabulary info)
+      const { data, error: supaErr } = await supabase
+        .from('vocabulary_status')
+        .select(`
         vocabulary_id,
         next_review_at,
         vocabulary (
@@ -106,50 +106,50 @@ export default function FlashcardsPage() {
           set_id
         )
       `)
-      .in('vocabulary_id', vocabularyIds)
-      .lte('next_review_at', now)
-      .order('next_review_at', { ascending: true })
-      .limit(50);
+        .in('vocabulary_id', vocabularyIds)
+        .lte('next_review_at', now)
+        .order('next_review_at', { ascending: true })
+        .limit(50);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (supaErr) {
-      console.error('🔴 Supabase query failed:', supaErr);
-      setError(
-        `Supabase error:
+      if (supaErr) {
+        console.error('🔴 Supabase query failed:', supaErr);
+        setError(
+          `Supabase error:
 ${supaErr.message}
 (code: ${supaErr.code ?? 'N/A'})
 (hint: ${supaErr.hint ?? 'none'})`
-      );
-      setCards([]);
+        );
+        setCards([]);
+        setFetching(false);
+        return;
+      }
+
+      console.log('[DEBUG] Supabase data returned:', data);
+
+      // ✅ Convert data to flat structure
+      const formatted: FlatCard[] =
+        (data ?? []).map((row: any) => {
+          const v = row.vocabulary;
+          return {
+            id: v?.id ?? row.vocabulary_id,
+            word: v?.word ?? '',
+            meaning: v?.meaning ?? '',
+            example: v?.example ?? null,
+            next_review_at: row.next_review_at ?? null,
+          };
+        }) ?? [];
+
+      setCards(formatted);
+      setIndex(0);
+      setFlipped(false);
       setFetching(false);
-      return;
     }
 
-    console.log('[DEBUG] Supabase data returned:', data);
-
-    // ✅ Convert data to flat structure
-    const formatted: FlatCard[] =
-      (data ?? []).map((row: any) => {
-        const v = row.vocabulary;
-        return {
-          id: v?.id ?? row.vocabulary_id,
-          word: v?.word ?? '',
-          meaning: v?.meaning ?? '',
-          example: v?.example ?? null,
-          next_review_at: row.next_review_at ?? null,
-        };
-      }) ?? [];
-
-    setCards(formatted);
-    setIndex(0);
-    setFlipped(false);
-    setFetching(false);
-  }
-
-  loadDueCards();
-  return () => { mounted = false };
-}, [setId]);
+    loadDueCards();
+    return () => { mounted = false };
+  }, [setId]);
 
 
 
@@ -242,9 +242,8 @@ ${supaErr.message}
 
       <div
         onClick={() => setFlipped((f) => !f)}
-        className={`cursor-pointer rounded-lg border p-8 min-h-[180px] flex flex-col justify-center items-center bg-white shadow ${
-          flipped ? 'bg-yellow-50' : 'bg-white'
-        }`}
+        className={`cursor-pointer rounded-lg border p-8 min-h-[180px] flex flex-col justify-center items-center bg-white shadow ${flipped ? 'bg-yellow-50' : 'bg-white'
+          }`}
       >
         {!flipped ? (
           <div className="text-2xl font-semibold">{card.word}</div>

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/services/supabase/server';
 import { cookies } from 'next/headers';
-import { 
-  JournalFeedbackRequest, 
+import {
+  JournalFeedbackRequest,
   JournalFeedbackResponse,
-  WebhookResponse, 
+  WebhookResponse,
   WebhookFeedbackResponse,
-  FeedbackServiceResult 
+  FeedbackServiceResult
 } from '@/types/journal-feedback';
 import { authenticateUser, handleApiError, getUserPreferences } from '@/utils/api-helpers';
 
@@ -26,9 +26,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Authenticate user
     const user = await authenticateUser();
-    
+
     const body: JournalFeedbackRequest = await req.json();
-    
+
     // Validate request body
     if (!body.content || typeof body.content !== 'string') {
       return NextResponse.json(
@@ -51,9 +51,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // Make the request with user preferences included
     const feedback = await requestFeedbackWithRetry(body, userPreferences);
-    
+
     return NextResponse.json(feedback, { status: 200 });
-    
+
   } catch (error) {
     return handleApiError(error);
   }
@@ -76,7 +76,7 @@ async function requestFeedbackWithRetry(
 
     const response = await fetch(FEEDBACK_CONFIG.WEBHOOK_URL!, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'journal-feedback/1.0'
       },
@@ -95,7 +95,7 @@ async function requestFeedbackWithRetry(
     clearTimeout(timeoutId);
 
     console.log(`Response status: ${response.status}`);
-    
+
     if (!response.ok) {
       const responseText = await response.text();
       console.error(`Webhook error response: ${responseText}`);
@@ -104,21 +104,21 @@ async function requestFeedbackWithRetry(
 
     const data = await response.json();
     console.log('Webhook raw response:', JSON.stringify(data, null, 2));
-    
+
     const normalized = normalizeFeedbackResponse(data, body);
     console.log('Normalized response:', JSON.stringify(normalized, null, 2));
-    
+
     return normalized;
-    
+
   } catch (error) {
     console.error(`Feedback request failed (attempt ${retryCount + 1}):`, error);
-    
+
     // Retry once if it's the first attempt and not an abort error
     if (retryCount < FEEDBACK_CONFIG.MAX_RETRIES && !isAbortError(error)) {
       console.log('Retrying request...');
       return requestFeedbackWithRetry(body, userPreferences, retryCount + 1);
     }
-    
+
     // Throw the error instead of returning fallback data
     throw new Error(`Webhook request failed after ${retryCount + 1} attempts: ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -175,8 +175,8 @@ function normalizeFeedbackResponse(
     },
     improvedVersion: feedback.improvedVersion || '',
     originalVersion: feedback.originalVersion || originalRequest.content || '',
-    vocabSuggestions: Array.isArray(feedback.vocabSuggestions) 
-      ? feedback.vocabSuggestions 
+    vocabSuggestions: Array.isArray(feedback.vocabSuggestions)
+      ? feedback.vocabSuggestions
       : [],
   };
   console.log('✅ Normalized to legacy format:', JSON.stringify(legacy, null, 2));

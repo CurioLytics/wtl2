@@ -1,32 +1,36 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { type Database } from '@/types/database.types'
+import { createBrowserClient } from '@supabase/ssr';
+import { type Database } from '@/types/database.types';
 
-/**
- * Create and manage a singleton Supabase client instance to avoid authentication issues.
- * This prevents multiple instances from being created which can lead to auth conflicts
- * and repeated requests to Supabase.
- */
-let supabaseInstance: ReturnType<typeof createClientComponentClient<Database>> | null = null;
+let supabaseInstance: ReturnType<typeof createBrowserClient<Database>> | null = null;
 
-// Use a singleton pattern to ensure only one client is created
-export const supabase = typeof window !== 'undefined' 
-  ? (supabaseInstance ?? (supabaseInstance = createClientComponentClient<Database>()))
-  : createClientComponentClient<Database>(); // SSR requires a new instance
+export const createClient = () => {
+  if (typeof window === 'undefined') {
+    return createBrowserClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }
 
-/**
- * WARNING: Only use this when you absolutely need a fresh instance.
- * Using multiple client instances can cause authentication issues.
- * @returns A new Supabase client instance
- * @deprecated Use the singleton `supabase` instance instead
- */
+  if (!supabaseInstance) {
+    supabaseInstance = createBrowserClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }
+
+  return supabaseInstance;
+};
+
+// Singleton instance for direct imports
+export const supabase = createClient();
+
+// Backwards compatibility for code calling createFreshClient (though we recommend using the singleton)
 export const createFreshClient = () => {
-  console.warn(
-    'WARNING: Creating a fresh Supabase client instance. ' +
-    'This may cause authentication issues. ' + 
-    'Use the singleton instance exported as `supabase` instead.'
+  console.warn('Using createFreshClient with createBrowserClient. Prefer using the singleton.');
+  return createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
-  return createClientComponentClient<Database>();
-}
+};
 
-// Export singleton instance for direct imports
 export default supabase;

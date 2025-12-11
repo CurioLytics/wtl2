@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+
 import { Button } from '@/components/ui/button';
 import { signInWithEmail, signUpWithEmail } from '@/services/auth-service';
 import { OAuthButtons } from './oauth-buttons';

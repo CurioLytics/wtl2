@@ -1,4 +1,4 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/services/supabase/client';
 import { RoleplayMessage, RoleplayScenario, RoleplayFeedback, RoleplaySessionData } from '@/types/roleplay';
 import { errorLog } from '@/utils/roleplay-utils';
 import { roleplayFeedbackService } from './roleplay-feedback-service';
@@ -15,7 +15,7 @@ class RoleplaySessionService {
     messages: RoleplayMessage[],
     userPreferences?: { name?: string; english_level?: string; style?: string } | null
   ): Promise<string> {
-    const supabase = createClientComponentClient();
+    const supabase = createClient();
 
     // Save session
     const { data, error } = await supabase
@@ -23,7 +23,7 @@ class RoleplaySessionService {
       .insert({
         profile_id: userId,
         roleplay_id: scenario.id,
-        conversation_json: { messages }
+        conversation_json: { messages } as any
       })
       .select('session_id')
       .single();
@@ -70,7 +70,7 @@ class RoleplaySessionService {
     sessionId: string,
     userPreferences?: { name?: string; english_level?: string; style?: string } | null
   ): Promise<RoleplayFeedback> {
-    const supabase = createClientComponentClient();
+    const supabase = createClient();
 
     // Get session data
     const { data: session, error } = await supabase
@@ -87,8 +87,8 @@ class RoleplaySessionService {
       throw new Error('Session not found');
     }
 
-    const scenario = session.roleplays as any;
-    const messages = session.conversation_json?.messages || [];
+    const scenario = (session as any).roleplays;
+    const messages = (session.conversation_json as any)?.messages || [];
 
     // Generate feedback with user preferences
     const feedback = await roleplayFeedbackService.generateFeedback(
@@ -124,7 +124,7 @@ class RoleplaySessionService {
   }
 
   async getSessionWithFeedback(sessionId: string) {
-    const supabase = createClientComponentClient();
+    const supabase = createClient();
 
     const { data, error } = await supabase
       .from('sessions')
@@ -175,7 +175,7 @@ class RoleplaySessionService {
    * Get user's roleplay session history
    */
   async getSessions(userId: string): Promise<RoleplaySessionData[]> {
-    const supabase = createClientComponentClient();
+    const supabase = createClient();
 
     const { data, error } = await supabase
       .from('sessions')
@@ -203,7 +203,7 @@ class RoleplaySessionService {
       session_id: session.session_id,
       scenario_name: (session.roleplays as any)?.name || 'Unknown Scenario',
       scenario: session.roleplays as any,
-      feedback: session.feedback,
+      feedback: typeof session.feedback === 'string' ? JSON.parse(session.feedback) : session.feedback,
       messages: session.conversation_json?.messages || [],
       highlights: session.highlights || [],
       created_at: session.created_at,
@@ -215,7 +215,7 @@ class RoleplaySessionService {
    * Save highlights and generate vocabulary
    */
   async saveHighlightsAndGenerateFlashcards(sessionId: string, highlights: string[], sessionData: any, userId: string) {
-    const supabase = createClientComponentClient();
+    const supabase = createClient();
 
     // Save highlights
     const { error } = await supabase
@@ -237,7 +237,7 @@ class RoleplaySessionService {
   }
 
   private async saveFeedback(sessionId: string, feedback: RoleplayFeedback): Promise<void> {
-    const supabase = createClientComponentClient();
+    const supabase = createClient();
 
     const { error } = await supabase
       .from('sessions')
@@ -276,7 +276,7 @@ class RoleplaySessionService {
    * Toggle pin status for a session
    */
   async togglePinSession(sessionId: string, pinned: boolean): Promise<void> {
-    const supabase = createClientComponentClient();
+    const supabase = createClient();
 
     const { error } = await supabase
       .from('sessions')

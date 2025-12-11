@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/services/supabase/client';
 
 // Define the user profile type based on the database schema
 export interface UserProfileData {
@@ -22,7 +22,7 @@ interface UserProfileState {
   profile: UserProfileData | null;
   isLoading: boolean;
   error: string | null;
-  
+
   // Actions
   fetchProfile: (userId: string) => Promise<void>;
   setProfile: (profile: UserProfileData | null) => void;
@@ -35,27 +35,27 @@ export const useUserProfileStore = create<UserProfileState>()(
       profile: null as UserProfileData | null,
       isLoading: false,
       error: null,
-      
+
       fetchProfile: async (userId: string) => {
         try {
           set({ isLoading: true, error: null });
-          
-          const supabase = createClientComponentClient();
+
+          const supabase = createClient();
           const { data, error } = await supabase
             .from('profiles')
             .select('id, name, english_level, style, daily_review_goal, daily_vocab_goal, daily_journal_goal, daily_roleplay_goal, updated_at, onboarding_completed')
             .eq('id', userId)
             .single();
-            
+
           if (error) {
             console.error('Error fetching user profile:', error);
             set({ error: error.message, isLoading: false });
             return;
           }
-          
-          set({ 
-            profile: data as UserProfileData, 
-            isLoading: false 
+
+          set({
+            profile: data as UserProfileData,
+            isLoading: false
           });
         } catch (err) {
           const errorMessage = err instanceof Error ? err.message : 'Failed to fetch profile';
@@ -63,11 +63,11 @@ export const useUserProfileStore = create<UserProfileState>()(
           set({ error: errorMessage, isLoading: false });
         }
       },
-      
+
       setProfile: (profile: UserProfileData | null) => {
         set({ profile });
       },
-      
+
       clearProfile: () => {
         set({ profile: null, error: null });
       },

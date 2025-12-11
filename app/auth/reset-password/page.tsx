@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { updatePassword } from '@/services/auth-service';
 import { LogoImage } from '@/components/auth/logo-image';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/services/supabase/client';
 
 // Force dynamic rendering to prevent build-time errors with window/searchParams
 export const dynamic = 'force-dynamic';
@@ -22,7 +22,7 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     // Check if we have valid session from email link
     const checkSession = async () => {
-      const supabase = createClientComponentClient();
+      const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session) {

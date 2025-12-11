@@ -1,5 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+
 import { Database } from '@/types/database.types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
@@ -22,8 +21,9 @@ export class AnalyticsService {
   /**
    * Create a server-side Supabase client with proper auth context
    */
-  private getSupabaseClient() {
-    return createRouteHandlerClient<Database>({ cookies });
+  private async getSupabaseClient() {
+    const { createClient } = await import('@/services/supabase/server');
+    return createClient();
   }
 
   /**
@@ -31,27 +31,18 @@ export class AnalyticsService {
    */
   async getDailyGoalStatus(profileId: string, date?: Date): Promise<DailyGoalStatus> {
     try {
-      const supabase = this.getSupabaseClient();
+      const supabase = await this.getSupabaseClient();
       const targetDate = date || new Date();
 
-      // Use UTC timezone to avoid timezone issues
-      const startOfDay = new Date(Date.UTC(
-        targetDate.getUTCFullYear(),
-        targetDate.getUTCMonth(),
-        targetDate.getUTCDate(),
-        0, 0, 0, 0
-      ));
-      const endOfDay = new Date(Date.UTC(
-        targetDate.getUTCFullYear(),
-        targetDate.getUTCMonth(),
-        targetDate.getUTCDate(),
-        23, 59, 59, 999
-      ));
+      // Get the date string in YYYY-MM-DD format (local timezone)
+      const year = targetDate.getFullYear();
+      const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+      const day = String(targetDate.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
 
       console.log('[getDailyGoalStatus] Date range:', {
         targetDate: targetDate.toISOString(),
-        startOfDay: startOfDay.toISOString(),
-        endOfDay: endOfDay.toISOString(),
+        dateString,
         profileId
       });
 
@@ -64,10 +55,8 @@ export class AnalyticsService {
           .maybeSingle(),
         (supabase as any)
           .from('learning_events')
-          .select('event_type')
+          .select('event_type, created_at')
           .eq('profile_id', profileId)
-          .gte('created_at', startOfDay.toISOString())
-          .lte('created_at', endOfDay.toISOString())
           .neq('event_type', 'session_active')
       ]);
 
@@ -75,10 +64,21 @@ export class AnalyticsService {
       if (eventsResult.error) throw eventsResult.error;
 
       const profile = profileResult.data;
-      const events = eventsResult.data;
+      const allEvents = eventsResult.data || [];
+
+      // Filter events by local date string
+      const events = allEvents.filter((event: any) => {
+        const eventDate = new Date(event.created_at);
+        const eventYear = eventDate.getFullYear();
+        const eventMonth = String(eventDate.getMonth() + 1).padStart(2, '0');
+        const eventDay = String(eventDate.getDate()).padStart(2, '0');
+        const eventDateString = `${eventYear}-${eventMonth}-${eventDay}`;
+        return eventDateString === dateString;
+      });
 
       console.log('[getDailyGoalStatus] Profile goals:', profile);
-      console.log('[getDailyGoalStatus] Events found:', events?.length, events);
+      console.log('[getDailyGoalStatus] All events:', allEvents?.length);
+      console.log('[getDailyGoalStatus] Events for', dateString, ':', events?.length, events);
 
       // Count each event type
       const eventCounts = (events as any)?.reduce((acc: any, e: any) => {
@@ -123,13 +123,11 @@ export class AnalyticsService {
     endDate: Date
   ): Promise<WeeklyActivityData[]> {
     try {
-      const supabase = this.getSupabaseClient();
+      const supabase = await this.getSupabaseClient();
       const { data, error } = await (supabase as any)
         .from('learning_events')
         .select('event_type, created_at')
         .eq('profile_id', profileId)
-        .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString())
         .neq('event_type', 'session_active')
         .order('created_at', { ascending: true });
 
@@ -138,10 +136,13 @@ export class AnalyticsService {
       // Group by date and event type
       const activityMap = new Map<string, WeeklyActivityData>();
 
-      // Initialize all dates in range with zero counts
+      // Initialize all dates in range with zero counts using local dates
       const currentDate = new Date(startDate);
       while (currentDate <= endDate) {
-        const dateKey = currentDate.toISOString().split('T')[0];
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const dateKey = `${year}-${month}-${day}`;
         activityMap.set(dateKey, {
           date: dateKey,
           vocab_created: 0,
@@ -152,9 +153,13 @@ export class AnalyticsService {
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
-      // Count events per day
+      // Count events per day using local date conversion
       (data as any)?.forEach((event: any) => {
-        const dateKey = new Date(event.created_at).toISOString().split('T')[0];
+        const eventDate = new Date(event.created_at);
+        const year = eventDate.getFullYear();
+        const month = String(eventDate.getMonth() + 1).padStart(2, '0');
+        const day = String(eventDate.getDate()).padStart(2, '0');
+        const dateKey = `${year}-${month}-${day}`;
         const dayData = activityMap.get(dateKey);
         if (dayData && event.event_type !== 'session_active') {
           (dayData as any)[event.event_type]++;
@@ -177,7 +182,7 @@ export class AnalyticsService {
     endDate?: Date
   ): Promise<GrammarErrorSummary[]> {
     try {
-      const supabase = this.getSupabaseClient();
+      const supabase = await this.getSupabaseClient();
       let query = (supabase as any)
         .from('grammar_feedback_view')
         .select('*')
@@ -256,7 +261,7 @@ export class AnalyticsService {
     metadata: any = {}
   ): Promise<void> {
     try {
-      const supabase = this.getSupabaseClient();
+      const supabase = await this.getSupabaseClient();
 
       // 1. Insert learning event
       const { error: eventError } = await (supabase as any)
@@ -282,7 +287,7 @@ export class AnalyticsService {
    * Internal method to update streak logic
    */
   private async updateStreak(profileId: string): Promise<void> {
-    const supabase = this.getSupabaseClient();
+    const supabase = await this.getSupabaseClient();
     const today = new Date().toISOString().split('T')[0];
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
@@ -334,7 +339,7 @@ export class AnalyticsService {
    */
   async getStreak(profileId: string): Promise<StreakData> {
     try {
-      const supabase = this.getSupabaseClient();
+      const supabase = await this.getSupabaseClient();
       const { data, error } = await (supabase as any)
         .from('user_streaks')
         .select('current_streak, longest_streak, last_active_date')
@@ -366,19 +371,14 @@ export class AnalyticsService {
     month: Date
   ): Promise<Map<string, DailyGoalStatus>> {
     try {
-      const supabase = this.getSupabaseClient();
-
-      // Get start and end of month in UTC
-      const startOfMonth = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth(), 1, 0, 0, 0, 0));
-      const endOfMonth = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+      const supabase = await this.getSupabaseClient();
 
       console.log('[getMonthlyGoalStatuses] Fetching for month:', {
-        startOfMonth: startOfMonth.toISOString(),
-        endOfMonth: endOfMonth.toISOString(),
+        month: month.toISOString(),
         profileId
       });
 
-      // Fetch profile goals and events for the entire month
+      // Fetch profile goals and all events (will filter client-side)
       const [profileResult, eventsResult] = await Promise.all([
         (supabase as any)
           .from('profiles')
@@ -389,8 +389,6 @@ export class AnalyticsService {
           .from('learning_events')
           .select('event_type, created_at')
           .eq('profile_id', profileId)
-          .gte('created_at', startOfMonth.toISOString())
-          .lte('created_at', endOfMonth.toISOString())
           .neq('event_type', 'session_active')
       ]);
 
@@ -398,14 +396,26 @@ export class AnalyticsService {
       if (eventsResult.error) throw eventsResult.error;
 
       const profile = profileResult.data;
-      const events = eventsResult.data || [];
+      const allEvents = eventsResult.data || [];
 
-      // Group events by date
+      // Get month boundaries using local time
+      const targetYear = month.getFullYear();
+      const targetMonth = month.getMonth();
+
+      // Group events by date using local timezone
       const eventsByDate = new Map<string, { [key: string]: number }>();
 
-      events.forEach((event: any) => {
+      allEvents.forEach((event: any) => {
         const eventDate = new Date(event.created_at);
-        const dateKey = `${eventDate.getUTCFullYear()}-${String(eventDate.getUTCMonth() + 1).padStart(2, '0')}-${String(eventDate.getUTCDate()).padStart(2, '0')}`;
+        const eventYear = eventDate.getFullYear();
+        const eventMonth = eventDate.getMonth();
+        
+        // Only include events from the target month
+        if (eventYear !== targetYear || eventMonth !== targetMonth) {
+          return;
+        }
+
+        const dateKey = `${eventYear}-${String(eventMonth + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
 
         if (!eventsByDate.has(dateKey)) {
           eventsByDate.set(dateKey, {});

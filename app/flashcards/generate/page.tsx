@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Flashcard } from '@/types/flashcard';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/auth/use-auth';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/services/supabase/client';
 import { FeedbackLoadingScreen } from '@/components/roleplay/feedback-loading-screen';
 
 interface VocabularySetOption {
@@ -80,7 +80,7 @@ export default function FlashcardCreationPage() {
     if (!user?.id) return;
 
     try {
-      const supabase = createClientComponentClient();
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('vocabulary_set')
         .select('id, title, is_default')
@@ -169,7 +169,7 @@ export default function FlashcardCreationPage() {
     setIsSaving(true);
 
     try {
-      const supabase = createClientComponentClient();
+      const supabase = createClient();
 
       // Save valid flashcards directly to vocabulary table
       const vocabularyData = validFlashcards.map((card) => ({
