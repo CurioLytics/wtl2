@@ -261,10 +261,7 @@ export class AnalyticsService {
   }
 
   /**
-   * Calculate streak based on session_active events
-   */
-  /**
-   * Track a learning event and update streak
+   * Track a learning event and update streak if ALL daily goals satisfied
    */
   async trackLearningEvent(
     profileId: string,
@@ -285,9 +282,9 @@ export class AnalyticsService {
 
       if (eventError) throw eventError;
 
-      // 2. Update streak if applicable
+      // 2. Update streak if applicable (only for goal-related events)
       if (['vocab_created', 'journal_created', 'roleplay_completed'].includes(eventType)) {
-        await this.updateStreak(profileId);
+        await this.updateStreakIfGoalsSatisfied(profileId);
       }
     } catch (error) {
       console.error('Error tracking learning event:', error);
@@ -295,58 +292,49 @@ export class AnalyticsService {
   }
 
   /**
-   * Internal method to update streak logic
+   * Update streak using optimized database function
+   * 
+   * Uses PostgreSQL function `update_user_streak` which:
+   * - Calculates streak atomically in single transaction
+   * - Prevents race conditions with database-level locking
+   * - Reduces network round-trips from 5-7 queries to 1
+   * - Automatically handles goal checking and streak logic
+   * 
+   * Performance: O(1) single atomic database operation
    */
-  private async updateStreak(profileId: string): Promise<void> {
-    const supabase = await this.getSupabaseClient();
-    const today = new Date().toISOString().split('T')[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  private async updateStreakIfGoalsSatisfied(profileId: string): Promise<void> {
+    try {
+      const supabase = await this.getSupabaseClient();
+      const today = new Date().toISOString().split('T')[0];
 
-    // Get current streak
-    const { data: currentStreakData } = await (supabase as any)
-      .from('user_streaks')
-      .select('*')
-      .eq('profile_id', profileId)
-      .single();
+      // Call PostgreSQL function - single atomic operation
+      const { data, error } = await (supabase as any).rpc('update_user_streak', {
+        p_profile_id: profileId,
+        p_today: today
+      });
 
-    let newCurrentStreak = 1;
-    let newLongestStreak = 1;
-    let shouldUpdate = false;
-
-    if (currentStreakData) {
-      const lastActive = currentStreakData.last_active_date;
-
-      if (lastActive === today) {
-        return; // Already counted
-      } else if (lastActive === yesterday) {
-        newCurrentStreak = currentStreakData.current_streak + 1;
-      } else {
-        newCurrentStreak = 1; // Streak broken
+      if (error) {
+        console.error('Error calling update_user_streak:', error);
+        throw error;
       }
 
-      newLongestStreak = Math.max(currentStreakData.longest_streak, newCurrentStreak);
-      shouldUpdate = true;
-    } else {
-      shouldUpdate = true; // First time
-    }
-
-    if (shouldUpdate) {
-      const { error } = await (supabase as any)
-        .from('user_streaks')
-        .upsert({
-          profile_id: profileId,
-          current_streak: newCurrentStreak,
-          longest_streak: newLongestStreak,
-          last_active_date: today,
-          updated_at: new Date().toISOString()
+      // Optional: Log result for debugging
+      if (data && data.length > 0) {
+        const result = data[0];
+        console.log('Streak updated:', {
+          current_streak: result.current_streak,
+          longest_streak: result.longest_streak,
+          goals_met: result.goals_met
         });
-
-      if (error) console.error('Error updating streak:', error);
+      }
+    } catch (error) {
+      console.error('Error updating streak:', error);
+      throw error;
     }
   }
 
   /**
-   * Get streak data from user_streaks table
+   * Get streak data from user_streaks table (simplified - no freeze info)
    */
   async getStreak(profileId: string): Promise<StreakData> {
     try {
@@ -360,7 +348,11 @@ export class AnalyticsService {
       if (error && error.code !== 'PGRST116') throw error;
 
       if (!data) {
-        return { current_streak: 0, longest_streak: 0, last_active_date: null };
+        return {
+          current_streak: 0,
+          longest_streak: 0,
+          last_active_date: null,
+        };
       }
 
       return {
@@ -370,7 +362,11 @@ export class AnalyticsService {
       };
     } catch (error) {
       console.error('Error fetching streak:', error);
-      return { current_streak: 0, longest_streak: 0, last_active_date: null };
+      return {
+        current_streak: 0,
+        longest_streak: 0,
+        last_active_date: null,
+      };
     }
   }
 

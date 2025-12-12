@@ -42,6 +42,17 @@ export interface StreakData {
     last_active_date: string | null;
 }
 
+export interface DailyGoalCompletion {
+    id: string;
+    profile_id: string;
+    completion_date: string;
+    vocab_count: number;
+    journal_count: number;
+    roleplay_count: number;
+    all_goals_met: boolean;
+    created_at: string;
+}
+
 export interface AnalyticsSummary {
     dailyGoal: DailyGoalStatus;
     weeklyActivity: WeeklyActivityData[];

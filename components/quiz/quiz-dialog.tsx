@@ -188,7 +188,7 @@ export function QuizDialog({ isOpen, onClose, questions, topicName, sources, onR
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-xl">
-                        {isLoading ? 'Đang tạo câu hỏi...' : showCompletion ? 'Chúc mừng!' : topicName}
+                        {isLoading ? 'Đang tạo câu hỏi...' : showCompletion ? 'You rocked!' : topicName}
                     </DialogTitle>
                 </DialogHeader>
 
@@ -380,9 +380,6 @@ export function QuizDialog({ isOpen, onClose, questions, topicName, sources, onR
                         )}
 
                         {/* Report Issue Link */}
-                        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-4">
-                            <button className="hover:underline">🚩 Báo lỗi câu hỏi</button>
-                        </div>
                     </>
                 )}
             </DialogContent>
