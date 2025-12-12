@@ -6,8 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint",
-    "run:fsrs": "vitest run fsrs.test.ts"
+    "lint": "eslint"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
