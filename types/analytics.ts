@@ -22,7 +22,6 @@ export interface DailyGoalStatus {
 export interface WeeklyActivityData {
     date: string;
     vocab_created: number;
-    vocab_reviewed: number;
     journal_created: number;
     roleplay_completed: number;
 }

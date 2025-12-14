@@ -13,14 +13,12 @@ interface WeeklyActivityChartProps {
 
 const ACTIVITY_COLORS = {
   vocab_created: '#8b5cf6', // purple
-  vocab_reviewed: '#06b6d4', // cyan
   journal_created: '#f59e0b', // amber
   roleplay_completed: '#10b981', // emerald
 };
 
 const ACTIVITY_LABELS = {
   vocab_created: 'Vocab Added',
-  vocab_reviewed: 'Vocab Reviewed',
   journal_created: 'Journal Entry',
   roleplay_completed: 'Roleplay Session',
 };
@@ -28,7 +26,7 @@ const ACTIVITY_LABELS = {
 export function WeeklyActivityChart({ data, isLoading, action }: WeeklyActivityChartProps) {
   if (isLoading) {
     return (
-      <Card className="p-6 bg-white shadow rounded-2xl">
+      <Card className="p-6 bg-white shadow-sm rounded-2xl border-0">
         <div className="h-80 flex items-center justify-center">
           <div className="text-muted-foreground">Đang tải dữ liệu hoạt động...</div>
         </div>
@@ -38,7 +36,7 @@ export function WeeklyActivityChart({ data, isLoading, action }: WeeklyActivityC
 
   if (!data || data.length === 0) {
     return (
-      <Card className="p-6 bg-white shadow rounded-2xl">
+      <Card className="p-6 bg-white shadow-sm rounded-2xl border-0">
         <div className="h-80 flex items-center justify-center">
           <div className="text-muted-foreground">Không có dữ liệu hoạt động</div>
         </div>
@@ -56,16 +54,16 @@ export function WeeklyActivityChart({ data, isLoading, action }: WeeklyActivityC
   }));
 
   return (
-    <Card className="p-6 bg-white shadow rounded-2xl h-full flex flex-col">
+    <Card className="p-6 bg-white shadow-sm rounded-2xl border-0">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold">Weekly Activity</h3>
-          <p className="text-sm text-muted-foreground">Your learning activities over time</p>
+          <h3 className="text-lg font-semibold">Nhật ký thực hành </h3>
+          <p className="text-sm text-muted-foreground">Các hoạt động học tập theo thời gian</p>
         </div>
         {action && <div>{action}</div>}
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={formattedData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -84,8 +82,30 @@ export function WeeklyActivityChart({ data, isLoading, action }: WeeklyActivityC
                 backgroundColor: 'hsl(var(--card))',
                 border: '1px solid hsl(var(--border))',
                 borderRadius: '8px',
+                padding: '8px',
               }}
-              labelStyle={{ color: 'hsl(var(--foreground))' }}
+              content={({ active, payload, label }) => {
+                if (!active || !payload) return null;
+                return (
+                  <div style={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    padding: '8px',
+                  }}>
+                    <div style={{ fontSize: '11px', marginBottom: '4px', color: 'hsl(var(--muted-foreground))' }}>
+                      {label}
+                    </div>
+                    {payload.map((entry: any, index: number) => (
+                      entry.value > 0 && (
+                        <div key={index} style={{ fontSize: '11px', color: entry.color, marginBottom: '2px' }}>
+                          <span style={{ fontWeight: 'bold' }}>{ACTIVITY_LABELS[entry.name as keyof typeof ACTIVITY_LABELS]}:</span> {entry.value}
+                        </div>
+                      )
+                    ))}
+                  </div>
+                );
+              }}
             />
             <Legend
               wrapperStyle={{ paddingTop: '20px' }}
@@ -96,13 +116,6 @@ export function WeeklyActivityChart({ data, isLoading, action }: WeeklyActivityC
               stackId="a"
               fill={ACTIVITY_COLORS.vocab_created}
               name="vocab_created"
-              radius={[0, 0, 0, 0]}
-            />
-            <Bar
-              dataKey="vocab_reviewed"
-              stackId="a"
-              fill={ACTIVITY_COLORS.vocab_reviewed}
-              name="vocab_reviewed"
               radius={[0, 0, 0, 0]}
             />
             <Bar

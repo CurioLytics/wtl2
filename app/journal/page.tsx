@@ -168,7 +168,7 @@ export default function JournalPage() {
 
       {/* HEADER */}
       <div className="w-full max-w-3xl bg-white shadow rounded-2xl p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Nhật ký của tôi</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Tổng hợp nhật ký</h1>
         <p className="mt-2 text-sm text-gray-600">
           Viết bằng tiếng Anh và nhận phản hồi chi tiết
         </p>

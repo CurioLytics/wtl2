@@ -40,6 +40,8 @@ export function GrammarErrorChart({ data, isLoading }: GrammarErrorChartProps) {
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [currentTopicName, setCurrentTopicName] = useState<string>('');
   const [quizSources, setQuizSources] = useState<string>('');
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [selectedErrorDetail, setSelectedErrorDetail] = useState<GrammarErrorSummary | null>(null);
   const profile = useUserProfileStore((state) => state.profile);
 
   const handlePracticeClick = () => {
@@ -169,11 +171,24 @@ export function GrammarErrorChart({ data, isLoading }: GrammarErrorChartProps) {
     }
   };
 
+  const handleBarClick = (data: any, index: number) => {
+    // Find the full error data from the original data array
+    const fullTopic = data.fullTopic;
+    const errorDetail = data && typeof data === 'object' && 'fullTopic' in data 
+      ? (data as any).original 
+      : null;
+    
+    if (errorDetail) {
+      setSelectedErrorDetail(errorDetail);
+      setIsDetailDialogOpen(true);
+    }
+  };
+
 
 
   if (isLoading) {
     return (
-      <Card className="p-6 bg-white shadow rounded-2xl">
+      <Card className="p-6 bg-white shadow-sm rounded-2xl border-0">
         <div className="h-80 flex items-center justify-center">
           <div className="text-muted-foreground">Đang tải phân tích lỗi...</div>
         </div>
@@ -183,7 +198,7 @@ export function GrammarErrorChart({ data, isLoading }: GrammarErrorChartProps) {
 
   if (!data || data.length === 0) {
     return (
-      <Card className="p-6 bg-white shadow rounded-2xl">
+      <Card className="p-6 bg-white shadow-sm rounded-2xl border-0">
         <div className="h-80 flex flex-col items-center justify-center">
           <div className="text-6xl mb-4">🎉</div>
           <div className="text-lg font-medium">Không có lỗi ngữ pháp!</div>
@@ -193,8 +208,8 @@ export function GrammarErrorChart({ data, isLoading }: GrammarErrorChartProps) {
     );
   }
 
-  // Take top 10 errors for chart
-  const chartData = data.slice(0, 10).map(item => ({
+  // Show more errors for scrolling (limit to 20)
+  const chartData = data.slice(0, 20).map(item => ({
     topic: item.topic_name.length > 20
       ? item.topic_name.substring(0, 20) + '...'
       : item.topic_name,
@@ -202,165 +217,123 @@ export function GrammarErrorChart({ data, isLoading }: GrammarErrorChartProps) {
     count: item.error_count,
     level: item.topic_level,
     tags: item.all_tags || [],
+    original: item, // Store original error data for dialog
   }));
 
+  // Calculate height based on number of bars (40px per bar for consistency with weekly chart, min 6 bars visible)
+  const barHeight = 40;
+  const visibleBars = 6;
+  const totalHeight = chartData.length * barHeight;
+  const containerHeight = visibleBars * barHeight;
+
+  // Get max value for consistent X-axis scale
+  const maxValue = Math.max(...chartData.map(d => d.count));
+
   return (
-    <Card className="p-6 bg-white shadow rounded-2xl">
-      <div className="mb-6 flex items-start justify-between">
+    <Card className="p-6 bg-white shadow-sm rounded-2xl border-0">
+      <div className="mb-6">
         <div>
-          <h3 className="text-lg font-semibold">Grammar Error Analysis</h3>
+          <h3 className="text-lg font-semibold">Chủ đề ngữ pháp</h3>
           <p className="text-sm text-muted-foreground">
-            Most common grammar issues to focus on
+            Các chủ điểm ngữ pháp hay sai nhất 
           </p>
         </div>
-        <Button
-          onClick={handlePracticeClick}
-          disabled={!data || data.length === 0}
-          size="sm"
-          className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
-        >
-          Ôn tập từ lỗi sai
-        </Button>
       </div>
 
       <div className="mb-6">
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart
-            data={chartData}
-            layout="vertical"
-            margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis
-              type="number"
-              className="text-xs"
-              tick={{ fill: 'hsl(var(--muted-foreground))' }}
-              allowDecimals={false}
-            />
-            <YAxis
-              type="category"
-              dataKey="topic"
-              className="text-xs"
-              tick={{ fill: 'hsl(var(--muted-foreground))' }}
-              width={90}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                padding: '12px',
-              }}
-              labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 'bold', marginBottom: '8px' }}
-              content={({ active, payload }) => {
-                if (!active || !payload || !payload.length) return null;
-                const data = payload[0].payload;
-                return (
-                  <div style={{
+        {/* Scrollable bars area */}
+        <div className="overflow-y-auto" style={{ height: `${containerHeight}px` }}>
+          <div style={{ height: `${totalHeight}px` }}>
+            <ResponsiveContainer width="100%" height={totalHeight}>
+              <BarChart
+                data={chartData}
+                layout="vertical"
+                margin={{ top: 5, right: 30, left: 10, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis
+                  type="number"
+                  className="text-xs"
+                  tick={false}
+                  axisLine={false}
+                  domain={[0, maxValue]}
+                  allowDecimals={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="topic"
+                  className="text-xs"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  width={110}
+                />
+                <Tooltip
+                  contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
-                    padding: '12px',
-                    minWidth: '200px',
-                  }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: '8px', color: 'hsl(var(--foreground))' }}>
-                      {data.fullTopic}
-                    </div>
-                    <div style={{ marginBottom: '8px', color: 'hsl(var(--foreground))' }}>
-                      <strong>{data.count}</strong> lỗi
-                    </div>
-                    {data.tags && data.tags.length > 0 && (
-                      <div style={{ marginTop: '8px', borderTop: '1px solid hsl(var(--border))', paddingTop: '8px' }}>
-                        <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: 'hsl(var(--muted-foreground))' }}>
-                          Tags:
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                          {data.tags.map((tag: string, idx: number) => (
-                            <span
-                              key={idx}
-                              style={{
-                                fontSize: '11px',
-                                padding: '2px 8px',
-                                backgroundColor: 'hsl(var(--muted))',
-                                color: 'hsl(var(--muted-foreground))',
-                                borderRadius: '12px',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {tag}
-                            </span>
-                          ))}
+                    padding: '8px 12px',
+                  }}
+                  content={({ active, payload }) => {
+                    if (!active || !payload || !payload.length) return null;
+                    const data = payload[0].payload;
+                    return (
+                      <div style={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                      }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '14px', color: 'hsl(var(--foreground))' }}>
+                          {data.count} lỗi
                         </div>
                       </div>
-                    )}
-                  </div>
-                );
-              }}
-            />
-            <Bar
-              dataKey="count"
-              radius={[0, 4, 4, 0]}
+                    );
+                  }}
+                />
+                <Bar
+                  dataKey="count"
+                  radius={[0, 4, 4, 0]}
+                  onClick={handleBarClick}
+                  cursor="pointer"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={ERROR_COLORS[index % ERROR_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Fixed X-axis at bottom */}
+        <div className="border-t-2 pt-3 mt-2 bg-gray-50 rounded px-3 py-2" style={{ marginLeft: '100px', marginRight: '30px' }}>
+          <ResponsiveContainer width="100%" height={60}>
+            <BarChart
+              data={[{ value: 0 }]}
+              layout="vertical"
+              margin={{ top: 0, right: 0, left: 0, bottom: 10 }}
             >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={ERROR_COLORS[index % ERROR_COLORS.length]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={true} horizontal={false} />
+              <XAxis
+                type="number"
+                className="text-sm font-medium"
+                tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
+                domain={[0, maxValue]}
+                ticks={Array.from({ length: Math.min(maxValue + 1, 10) }, (_, i) => Math.ceil(maxValue / 9) * i).filter(v => v <= maxValue)}
+                allowDecimals={false}
+                axisLine={{ stroke: 'hsl(var(--border))', strokeWidth: 2 }}
+                tickLine={{ stroke: 'hsl(var(--border))' }}
+                label={{ 
+                  value: 'Số lỗi', 
+                  position: 'insideBottom', 
+                  offset: -5, 
+                  style: { fontSize: '13px', fontWeight: 600, fill: 'hsl(var(--foreground))' } 
+                }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
-
-      {/* Error details accordion */}
-      <div className="mt-6 border-t pt-6">
-        <h4 className="text-sm font-medium mb-3">Error Details</h4>
-        <Accordion type="single" collapsible className="w-full">
-          {data.slice(0, 5).map((error, index) => (
-            <AccordionItem key={index} value={`item-${index}`}>
-              <AccordionTrigger className="text-sm hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: ERROR_COLORS[index % ERROR_COLORS.length] }}
-                  />
-                  <span className="font-medium">{error.topic_name}</span>
-                  <span className="text-xs text-muted-foreground ml-auto mr-2">
-                    {error.error_count} {error.error_count === 1 ? 'error' : 'errors'}
-                  </span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="pl-6 space-y-3">
-                  {error.recent_errors.length > 0 ? (
-                    <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                      {error.recent_errors.map((desc, idx) => (
-                        <li key={idx}>{desc}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No error details available</p>
-                  )}
-
-                  <Button
-                    onClick={() => handlePracticeNow(error.topic_name)}
-                    disabled={practiceLoading === error.topic_name || !profile?.english_level}
-                    size="sm"
-                    variant="outline"
-                    className="mt-2"
-                  >
-                    {practiceLoading === error.topic_name ? 'Đang xử lý...' : 'Ôn tập ngay'}
-                  </Button>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </div>
-
-      <PracticeDialog
-        isOpen={isPracticeOpen}
-        onClose={() => setIsPracticeOpen(false)}
-        errorData={selectedErrorData}
-        grammarTopics={grammarTopics}
-      />
 
       <QuizDialog
         isOpen={isQuizOpen}
@@ -372,6 +345,85 @@ export function GrammarErrorChart({ data, isLoading }: GrammarErrorChartProps) {
         isLoading={!!practiceLoading}
         loadingSteps={['Đang tìm nguồn', 'Đang lọc câu hỏi theo level', 'Đang tạo giải thích']}
       />
+
+      {/* Error Detail Dialog */}
+      {selectedErrorDetail && (
+        <div
+          className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity ${
+            isDetailDialogOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
+          onClick={() => setIsDetailDialogOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+          <div
+            className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-semibold">{selectedErrorDetail.topic_name}</h3>
+              <button
+                onClick={() => setIsDetailDialogOpen(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  <strong className="text-lg text-foreground">{selectedErrorDetail.error_count}</strong> lỗi được phát hiện
+                </p>
+                {selectedErrorDetail.topic_level && (
+                  <p className="text-sm text-muted-foreground">
+                    Cấp độ: <span className="font-medium">{selectedErrorDetail.topic_level}</span>
+                  </p>
+                )}
+              </div>
+
+              {selectedErrorDetail.all_tags && selectedErrorDetail.all_tags.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Tags:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedErrorDetail.all_tags.map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="text-xs px-3 py-1 bg-muted text-muted-foreground rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedErrorDetail.recent_errors.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Ví dụ lỗi gần đây:</h4>
+                  <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+                    {selectedErrorDetail.recent_errors.map((desc, idx) => (
+                      <li key={idx}>{desc}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="pt-4 border-t">
+                <Button
+                  onClick={() => {
+                    handlePracticeNow(selectedErrorDetail.topic_name);
+                    setIsDetailDialogOpen(false);
+                  }}
+                  disabled={practiceLoading === selectedErrorDetail.topic_name || !profile?.english_level}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {practiceLoading === selectedErrorDetail.topic_name ? 'Đang xử lý...' : 'Ôn tập ngay'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

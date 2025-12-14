@@ -1042,7 +1042,6 @@ export type Database = {
       feedback_source_type: "journal" | "roleplay"
       learning_event_type:
         | "vocab_created"
-        | "vocab_reviewed"
         | "journal_created"
         | "roleplay_completed"
         | "session_active"
@@ -1176,7 +1175,6 @@ export const Constants = {
       feedback_source_type: ["journal", "roleplay"],
       learning_event_type: [
         "vocab_created",
-        "vocab_reviewed",
         "journal_created",
         "roleplay_completed",
         "session_active",

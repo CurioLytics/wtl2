@@ -159,7 +159,6 @@ export class AnalyticsService {
         activityMap.set(dateKey, {
           date: dateKey,
           vocab_created: 0,
-          vocab_reviewed: 0,
           journal_created: 0,
           roleplay_completed: 0,
         });

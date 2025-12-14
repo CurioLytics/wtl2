@@ -24,27 +24,33 @@ export function DailyGoalCard({ data, isLoading }: DailyGoalCardProps) {
       label: 'Add Vocabulary',
       icon: BookOpen,
       target: profile?.daily_vocab_goal || data?.vocab_created.target || 10,
-      link: '/vocab'
+      link: '/vocab',
+      bgColor: 'bg-purple-100',
+      iconColor: 'text-purple-600'
     },
     {
       key: 'journal_created' as const,
       label: 'Write Journal',
       icon: PenLine,
       target: profile?.daily_journal_goal || data?.journal_created.target || 3,
-      link: '/journal/new'
+      link: '/journal/new',
+      bgColor: 'bg-amber-100',
+      iconColor: 'text-amber-600'
     },
     {
       key: 'roleplay_completed' as const,
       label: 'Complete Roleplay',
       icon: MessageSquare,
       target: profile?.daily_roleplay_goal || data?.roleplay_completed.target || 2,
-      link: '/roleplay'
+      link: '/roleplay',
+      bgColor: 'bg-teal-100',
+      iconColor: 'text-teal-600'
     },
   ];
 
   if (isLoading) {
     return (
-      <Card className="p-6 bg-white shadow rounded-2xl">
+      <Card className="p-6 bg-white shadow-sm rounded-2xl border-0">
         <div className="h-64 flex items-center justify-center">
           <LoadingSpinner text="Đang tải mục tiêu..." />
         </div>
@@ -85,10 +91,10 @@ export function DailyGoalCard({ data, isLoading }: DailyGoalCardProps) {
 
 
   return (
-    <Card className="p-6 bg-white shadow rounded-2xl h-full flex flex-col">
+    <Card className="p-6 bg-white shadow-md rounded-2xl border-2 border-green-400 transition-all duration-300 h-full flex flex-col">
       {/* Title */}
       <div className="text-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Daily Plan</h3>
+        <h3 className="text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Mục tiêu hàng ngày</h3>
       </div>
 
       {/* Circular progress indicator - Centered and larger */}
@@ -131,25 +137,31 @@ export function DailyGoalCard({ data, isLoading }: DailyGoalCardProps) {
           const completed = data?.[goal.key]?.completed || 0;
           const target = goal.target;
           const Icon = goal.icon;
+          const isCompleted = completed >= target;
 
           return (
             <Link key={goal.key} href={goal.link}>
-              <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group">
+              <div className={cn(
+                "flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer group",
+                isCompleted 
+                  ? "bg-green-100 hover:bg-green-200" 
+                  : "hover:bg-gray-50"
+              )}>
                 <div className="flex items-center gap-3 flex-1">
-                  {/* Minimalistic icon */}
-                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-4 h-4 text-gray-600" />
+                  {/* Colored icon */}
+                  <div className={`w-8 h-8 rounded-lg ${goal.bgColor} flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`w-4 h-4 ${goal.iconColor}`} />
                   </div>
 
                   {/* Goal name */}
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-gray-900">
                     {goal.label}
                   </span>
                 </div>
 
                 {/* Count and arrow */}
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-500">
+                  <span className="text-sm font-semibold text-gray-900">
                     {completed} / {target}
                   </span>
                   <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
@@ -162,7 +174,6 @@ export function DailyGoalCard({ data, isLoading }: DailyGoalCardProps) {
 
       {/* Bottom label */}
       <div className="mt-4 pt-4 border-t border-gray-100">
-        <p className="text-xs text-center text-gray-400">Daily progress</p>
       </div>
     </Card>
   );
