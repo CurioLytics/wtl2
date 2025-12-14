@@ -96,8 +96,8 @@ export function JournalEditorLayout({
                 'Lưu'
               )}
             </Button>
-            <Button onClick={onGetFeedback} disabled={!hasContent || !content || !title || isSaving || isGettingFeedback}>
-              Nhận phản hồi
+            <Button onClick={onGetFeedback} variant="default" disabled={!hasContent || !content || !title || isSaving || isGettingFeedback}>
+              Phân tích tiếng Anh
             </Button>
           </div>
         </div>

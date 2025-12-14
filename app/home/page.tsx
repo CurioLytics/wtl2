@@ -306,8 +306,8 @@ export default function DashboardPage() {
     return (
         <div className="scroll-smooth">
             <SectionNavigation sections={[
-                { id: 'journal', label: 'Journaling' },
-                { id: 'practice', label: 'Practice' },
+                { id: 'journal', label: 'Nhật ký' },
+                { id: 'practice', label: 'Học tiếng Anh' },
             ]} />
             {/* SECTION 1 – VIẾT */}
             <section ref={journalSectionRef} id="journal" className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-gray-50 to-blue-50/40 px-4 py-8">

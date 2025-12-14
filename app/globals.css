@@ -315,6 +315,18 @@ html {
   opacity: 0.9;
 }
 
+.journal-theme button[data-slot="button"][class*="outline"],
+.journal-theme button[data-slot="button"][class*="secondary"] {
+  border-color: oklch(0.15 0 0) !important;
+  color: oklch(0.15 0 0) !important;
+  background-color: transparent !important;
+}
+
+.journal-theme button[data-slot="button"][class*="outline"]:hover,
+.journal-theme button[data-slot="button"][class*="secondary"]:hover {
+  background-color: oklch(0.15 0 0 / 0.05) !important;
+}
+
 /* English Practice Theme: Lively blue with black accents */
 .english-theme {
   --primary: var(--primary-blue);
