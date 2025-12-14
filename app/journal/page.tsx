@@ -182,7 +182,7 @@ export default function JournalPage() {
           {/* Action Button Row */}
           <div className="flex justify-end">
             <Button onClick={() => router.push('/journal/new')} variant="default">
-              Viết
+              Viết mới
             </Button>
           </div>
 

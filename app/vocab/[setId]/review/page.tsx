@@ -182,53 +182,55 @@ export default function ReviewPage() {
     );
 
   return (
-    <div className="max-w-3xl mx-auto px-4 space-y-8 py-8">
-      <div className="bg-white shadow rounded-2xl p-6">
-        <div className="flex justify-between items-start mb-6">
-          {/* MOVED: Star and Shuffle to the left (first div inside justify-between) */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleShuffle}
-              className="p-3 text-gray-600 hover:text-[var(--primary)] transition-colors"
-              aria-label="Xáo mặt trước & sau"
-              title="Đổi nội dung mặt trước/sau"
-            >
-              🔀
-            </button>
-            {currentCard && (
+    <div className="min-h-screen flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-3xl">
+        <div className="bg-white shadow rounded-2xl p-6">
+          <div className="flex justify-between items-start mb-6">
+            {/* MOVED: Star and Shuffle to the left (first div inside justify-between) */}
+            <div className="flex items-center gap-2">
               <button
-                onClick={handleStarToggle}
-                className={`p-3 transition-colors ${currentCard.is_starred
-                  ? 'text-yellow-500 hover:text-yellow-600'
-                  : 'text-gray-400 hover:text-yellow-500'
-                  }`}
-                aria-label={currentCard.is_starred ? 'Bỏ đánh dấu' : 'Đánh dấu'}
-                title={currentCard.is_starred ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
+                onClick={handleShuffle}
+                className="p-3 text-gray-600 hover:text-[var(--primary)] transition-colors"
+                aria-label="Xáo mặt trước & sau"
+                title="Đổi nội dung mặt trước/sau"
               >
-                {currentCard.is_starred ? '⭐' : '☆'}
+                🔀
               </button>
-            )}
+              {currentCard && (
+                <button
+                  onClick={handleStarToggle}
+                  className={`p-3 transition-colors ${currentCard.is_starred
+                    ? 'text-yellow-500 hover:text-yellow-600'
+                    : 'text-gray-400 hover:text-yellow-500'
+                    }`}
+                  aria-label={currentCard.is_starred ? 'Bỏ đánh dấu' : 'Đánh dấu'}
+                  title={currentCard.is_starred ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
+                >
+                  {currentCard.is_starred ? '⭐' : '☆'}
+                </button>
+              )}
+            </div>
+            {/* MOVED: Button to the right (second div inside justify-between) */}
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => router.push("/vocab")}
+                variant="default"
+                className=""
+              >
+                Kết thúc
+              </Button>
+            </div>
           </div>
-          {/* MOVED: Button to the right (second div inside justify-between) */}
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => router.push("/vocab")}
-              variant="default"
-              className=""
-            >
-              Kết thúc
-            </Button>
+          <div className="flex flex-col items-center justify-center space-y-6 mt-8 min-h-[500px]">
+            <ProgressBar value={progress} />
+            <FlashcardCard
+              front={getFrontContent(currentCard)}
+              back={getBackContent(currentCard)}
+              isFlipped={flipped}
+              onFlip={() => setFlipped(!flipped)}
+            />
+            {flipped && <ReviewControls onRate={handleRating} />}
           </div>
-        </div>
-        <div className="w-full max-w-md space-y-4 mx-auto mt-4 min-h-[340px]">
-          <ProgressBar value={progress} />
-          <FlashcardCard
-            front={getFrontContent(currentCard)}
-            back={getBackContent(currentCard)}
-            isFlipped={flipped}
-            onFlip={() => setFlipped(!flipped)}
-          />
-          {flipped && <ReviewControls onRate={handleRating} />}
         </div>
       </div>
     </div>

@@ -45,6 +45,13 @@ function useJournalFeedbackDB(userId?: string) {
         if (isProcessing && jId) {
           console.log('🔄 Processing feedback for journal:', jId);
 
+          // Wait for userId to be available
+          if (!userId) {
+            console.log('⏳ Waiting for user authentication...');
+            setLoading(false);
+            return;
+          }
+
           // Fetch journal content
           const journal = await journalService.getJournalById(jId);
 
@@ -62,16 +69,9 @@ function useJournalFeedbackDB(userId?: string) {
               is_draft: true,
             });
 
-            // Get authenticated user ID from parameter
-            const userIdForFeedback = userId;
-
-            if (!userIdForFeedback) {
-              throw new Error('User ID not available - please log in');
-            }
-
             // Save feedback to database
             const newFeedbackId = await feedbackLogsService.saveFeedback({
-              userId: userIdForFeedback,
+              userId: userId,
               sourceId: jId,
               sourceType: 'journal',
               feedbackData: {
@@ -132,7 +132,7 @@ function useJournalFeedbackDB(userId?: string) {
     }
     load();
     return () => { cancelled = true; };
-  }, [searchParams]);
+  }, [searchParams, userId]);
 
   return { feedback, journalId, feedbackId, error, loading };
 }

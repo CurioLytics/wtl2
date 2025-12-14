@@ -23,8 +23,8 @@ export default function RoleplayPage() {
   return (
     <div className="flex flex-col items-center px-4 py-10 w-full">
       <SectionNavigation sections={[
-        { id: 'scenarios', label: 'Scenarios' },
-        { id: 'history', label: 'History' },
+        { id: 'scenarios', label: 'Roleplay' },
+        { id: 'history', label: 'Lịch sử' },
       ]} />
 
       {/* HEADER */}

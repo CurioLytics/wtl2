@@ -526,7 +526,7 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
                   <p className="text-sm text-gray-600 animate-pulse">Đang nghĩ...</p>
                 )}
                 {voiceState === 'listening' && (
-                  <p className="text-sm text-purple-600 font-medium animate-pulse">Lắng nghe...</p>
+                  <p className="text-sm text-purple-600 font-medium animate-pulse">Đang nghe...</p>
                 )}
                 {voiceState === 'user-speaking' && (
                   <div className="flex items-center gap-2">

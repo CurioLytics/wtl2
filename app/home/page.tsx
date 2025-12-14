@@ -347,7 +347,7 @@ export default function DashboardPage() {
                         <Button
                             onClick={() => router.push('/journal/new')}
                             variant='outline'
-                            className="relative overflow-hidden bg-white border-2 border-gray-900 text-gray-900 hover:text-white transition-colors duration-500 group text-sm sm:text-base"
+                            className="relative overflow-hidden bg-white border-2 border-gray-900 text-gray-900 hover:text-white transition-colors duration-500 group text-sm sm:text-base px-8 rounded-lg"
                         >
                             <span className="absolute inset-0 bg-gray-900 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></span>
                             <span className="relative z-10">Viết tự do</span>

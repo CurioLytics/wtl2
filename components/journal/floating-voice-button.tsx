@@ -138,7 +138,7 @@ export function FloatingVoiceButton({ onTranscript }: FloatingVoiceButtonProps) 
           </Tooltip>
 
           <div className="min-h-[1.25rem] text-sm font-medium text-blue-200">
-            {isListening ? (interimText ? 'Đang ghi lại...' : 'Đang lắng nghe...') : ' '}
+            {isListening ? (interimText ? 'Đang ghi lại...' : 'Đang nghe...') : ' '}
           </div>
         </div>
       </TooltipProvider>

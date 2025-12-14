@@ -304,15 +304,27 @@ html {
   --ring: var(--primary-blue);
 }
 
-.journal-theme button[data-slot="button"]:not([class*="variant"]),
-.journal-theme button[data-slot="button"][class*="default"] {
+/* Force all default buttons to have dark background - using extreme specificity */
+.journal-theme button[data-slot="button"]:not([class*="outline"]):not([class*="ghost"]):not([class*="link"]):not([class*="secondary"]):not([class*="destructive"]) {
   background-color: oklch(0.15 0 0) !important;
   color: white !important;
 }
 
-.journal-theme button[data-slot="button"]:not([class*="variant"]):hover,
-.journal-theme button[data-slot="button"][class*="default"]:hover {
-  opacity: 0.9;
+.journal-theme button[data-slot="button"]:not([class*="outline"]):not([class*="ghost"]):not([class*="link"]):not([class*="secondary"]):not([class*="destructive"]):hover {
+  background-color: white !important;
+  color: oklch(0.15 0 0) !important;
+  opacity: 1 !important;
+}
+
+/* Additional selector with even higher specificity targeting the exact bg class */
+.journal-theme button[data-slot="button"][class*="bg-"][class*="text-"] {
+  background-color: oklch(0.15 0 0) !important;
+  color: white !important;
+}
+
+.journal-theme button[data-slot="button"][class*="bg-"][class*="text-"]:hover {
+  background-color: white !important;
+  color: oklch(0.15 0 0) !important;
 }
 
 .journal-theme button[data-slot="button"][class*="outline"],

@@ -58,14 +58,16 @@ export function SessionHistory({ renderAsLinks = false }: { renderAsLinks?: bool
     }
 
     // Sort by pinned first, then by created_at
-    return filtered.sort((a, b) => {
-      // Pinned sessions come first
-      if (a.pinned !== b.pinned) {
-        return a.pinned ? -1 : 1;
-      }
-      // Then sort by date (newest first)
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
+    return filtered
+      .sort((a, b) => {
+        // Pinned sessions come first
+        if (a.pinned !== b.pinned) {
+          return a.pinned ? -1 : 1;
+        }
+        // Then sort by date (newest first)
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      })
+      .slice(0, 10); // Limit to top 10 sessions
   }, [sessions, datePreset]);
 
   const handleTogglePin = async (sessionId: string, pinned: boolean) => {
@@ -134,15 +136,17 @@ export function SessionHistory({ renderAsLinks = false }: { renderAsLinks?: bool
             ))}
           </ul>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredSessions.map((session) => (
-              <SessionCard
-                key={session.session_id}
-                session={session}
-                onClick={() => setSelectedSession(session)}
-                onTogglePin={handleTogglePin}
-              />
-            ))}
+          <div className="max-h-80 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-2">
+              {filteredSessions.map((session) => (
+                <SessionCard
+                  key={session.session_id}
+                  session={session}
+                  onClick={() => setSelectedSession(session)}
+                  onTogglePin={handleTogglePin}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
