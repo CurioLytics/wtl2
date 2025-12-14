@@ -153,6 +153,16 @@ function useHighlights() {
 
 // Removed legacy saveJournalAndHighlights helper (unused) to avoid dead code.
 
+// Helper to format feedback text with hyphens
+function formatWithHyphens(text: string): string {
+  if (!text) return text;
+  return text
+    .split('\n')
+    .filter(line => line.trim())
+    .map(line => `- ${line.trim()}`)
+    .join('\n');
+}
+
 export default function JournalFeedbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -332,7 +342,7 @@ export default function JournalFeedbackPage() {
             <div id="summary" className="scroll-mt-20">
               <h3 className="text-lg font-semibold text-gray-700 mb-3">Tóm tắt</h3>
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="whitespace-pre-wrap text-gray-800">{feedback.summary || 'Không có tóm tắt'}</div>
+                <div className="whitespace-pre-wrap text-gray-800 leading-[2]">{formatWithHyphens(feedback.summary) || 'Không có tóm tắt'}</div>
               </div>
             </div>
 
@@ -342,8 +352,8 @@ export default function JournalFeedbackPage() {
                 <AccordionItem value="fixed-typo">
                   <AccordionTrigger>Phiên bản đã sửa lỗi chính tả</AccordionTrigger>
                   <AccordionContent>
-                    <div className="whitespace-pre-wrap text-gray-800 leading-relaxed p-4 bg-gray-50 rounded-lg">
-                      {feedback.fixed_typo || feedback.originalVersion || 'Không có nội dung'}
+                    <div className="whitespace-pre-wrap text-gray-800 leading-[2] p-4 bg-gray-50 rounded-lg">
+                      {formatWithHyphens(feedback.fixed_typo || feedback.originalVersion) || 'Không có nội dung'}
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -361,8 +371,8 @@ export default function JournalFeedbackPage() {
                 </TabsList>
 
                 <TabsContent value="clarity" className="mt-4">
-                  <div id="clarity-content" className="whitespace-pre-wrap text-gray-800 leading-relaxed p-4 bg-gray-50 rounded-lg min-h-[200px]">
-                    {feedback.output?.clarity || 'Không có nội dung'}
+                  <div id="clarity-content" className="whitespace-pre-wrap text-gray-800 leading-[2] p-4 bg-gray-50 rounded-lg min-h-[200px]">
+                    {formatWithHyphens(feedback.output?.clarity) || 'Không có nội dung'}
                   </div>
                   <HighlightSelector
                     containerId="clarity-content"
@@ -372,8 +382,8 @@ export default function JournalFeedbackPage() {
                 </TabsContent>
 
                 <TabsContent value="vocabulary" className="mt-4">
-                  <div id="vocabulary-content" className="whitespace-pre-wrap text-gray-800 leading-relaxed p-4 bg-gray-50 rounded-lg min-h-[200px]">
-                    {feedback.output?.vocabulary || 'Không có nội dung'}
+                  <div id="vocabulary-content" className="whitespace-pre-wrap text-gray-800 leading-[2] p-4 bg-gray-50 rounded-lg min-h-[200px]">
+                    {formatWithHyphens(feedback.output?.vocabulary) || 'Không có nội dung'}
                   </div>
                   <HighlightSelector
                     containerId="vocabulary-content"
@@ -383,8 +393,8 @@ export default function JournalFeedbackPage() {
                 </TabsContent>
 
                 <TabsContent value="ideas" className="mt-4">
-                  <div id="ideas-content" className="whitespace-pre-wrap text-gray-800 leading-relaxed p-4 bg-gray-50 rounded-lg min-h-[200px]">
-                    {feedback.output?.ideas || 'Không có nội dung'}
+                  <div id="ideas-content" className="whitespace-pre-wrap text-gray-800 leading-[2] p-4 bg-gray-50 rounded-lg min-h-[200px]">
+                    {formatWithHyphens(feedback.output?.ideas) || 'Không có nội dung'}
                   </div>
                   <HighlightSelector
                     containerId="ideas-content"
@@ -394,8 +404,8 @@ export default function JournalFeedbackPage() {
                 </TabsContent>
 
                 <TabsContent value="enhanced" className="mt-4">
-                  <div id="enhanced-content" className="whitespace-pre-wrap text-gray-800 leading-relaxed p-4 bg-gray-50 rounded-lg min-h-[200px]">
-                    {feedback.enhanced_version || feedback.improvedVersion || 'Không có nội dung'}
+                  <div id="enhanced-content" className="whitespace-pre-wrap text-gray-800 leading-[2] p-4 bg-gray-50 rounded-lg min-h-[200px]">
+                    {formatWithHyphens(feedback.enhanced_version || feedback.improvedVersion) || 'Không có nội dung'}
                   </div>
                   <HighlightSelector
                     containerId="enhanced-content"
@@ -456,7 +466,7 @@ function GrammarDetailsSection({ details }: { details: GrammarDetail[] }) {
                   </span>
                 ))}
               </div>
-              <div className="text-gray-800 whitespace-pre-wrap">{detail.description}</div>
+              <div className="text-gray-800 whitespace-pre-wrap leading-[2]">{detail.description}</div>
             </CardContent>
           </Card>
         ))}

@@ -146,34 +146,26 @@ body {
   --sidebar-ring: oklch(0.6 0 0);
 }
 
-/* Scrollbar utilities for smooth horizontal scrolling */
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* Internet Explorer 10+ */
-  scrollbar-width: none;     /* Firefox */
-}
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;            /* Safari and Chrome */
-}
 
 /* Hide all scrollbars globally */
 * {
-  scrollbar-width: none;    /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 *::-webkit-scrollbar {
-  display: none;            /* Safari and Chrome */
+  display: none;
 }
 
 /* Hide body and html scrollbars but keep functionality */
 body, html {
-  scrollbar-width: none;    /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 body::-webkit-scrollbar, html::-webkit-scrollbar {
-  display: none;            /* Safari and Chrome */
+  display: none;
 }
 
 /* Smooth scroll behavior for the entire page */
@@ -316,17 +308,18 @@ html {
   opacity: 1 !important;
 }
 
-/* Additional selector with even higher specificity targeting the exact bg class */
-.journal-theme button[data-slot="button"][class*="bg-"][class*="text-"] {
+/* Additional selector with even higher specificity targeting the exact bg class - but EXCLUDE outline */
+.journal-theme button[data-slot="button"][class*="bg-"][class*="text-"]:not([class*="outline"]):not([class*="ghost"]):not([class*="link"]):not([class*="secondary"]):not([class*="destructive"]) {
   background-color: oklch(0.15 0 0) !important;
   color: white !important;
 }
 
-.journal-theme button[data-slot="button"][class*="bg-"][class*="text-"]:hover {
+.journal-theme button[data-slot="button"][class*="bg-"][class*="text-"]:not([class*="outline"]):not([class*="ghost"]):not([class*="link"]):not([class*="secondary"]):not([class*="destructive"]):hover {
   background-color: white !important;
   color: oklch(0.15 0 0) !important;
 }
 
+/* OUTLINE buttons - must come AFTER to have higher specificity */
 .journal-theme button[data-slot="button"][class*="outline"],
 .journal-theme button[data-slot="button"][class*="secondary"] {
   border-color: oklch(0.15 0 0) !important;
@@ -336,7 +329,9 @@ html {
 
 .journal-theme button[data-slot="button"][class*="outline"]:hover,
 .journal-theme button[data-slot="button"][class*="secondary"]:hover {
-  background-color: oklch(0.15 0 0 / 0.05) !important;
+  background-color: transparent !important;
+  border-color: oklch(0.15 0 0) !important;
+  color: oklch(0.15 0 0) !important;
 }
 
 /* English Practice Theme: Lively blue with black accents */
@@ -348,19 +343,30 @@ html {
   --ring: var(--primary-blue);
 }
 
-/* Force default buttons to use blue background and white text */
-.english-theme .bg-primary {
+/* Default buttons - blue background with white text */
+.english-theme button[data-slot="button"]:not([class*="outline"]):not([class*="ghost"]):not([class*="link"]):not([class*="secondary"]):not([class*="destructive"]) {
   background-color: var(--primary-blue) !important;
+  color: white !important;
 }
 
-.english-theme .text-primary-foreground {
-  color: oklch(1 0 0) !important;
+.english-theme button[data-slot="button"]:not([class*="outline"]):not([class*="ghost"]):not([class*="link"]):not([class*="secondary"]):not([class*="destructive"]):hover {
+  background-color: white !important;
+  color: var(--primary-blue) !important;
+  opacity: 1 !important;
 }
 
-.english-theme button[data-slot="button"]:not([class*="outline"]):not([class*="secondary"]):not([class*="ghost"]):not([class*="link"]):not([class*="destructive"]):hover {
-  background-color: var(--primary-blue-hover) !important;
+/* Additional selector for bg-/text- classes - but EXCLUDE outline */
+.english-theme button[data-slot="button"][class*="bg-"][class*="text-"]:not([class*="outline"]):not([class*="ghost"]):not([class*="link"]):not([class*="secondary"]):not([class*="destructive"]) {
+  background-color: var(--primary-blue) !important;
+  color: white !important;
 }
 
+.english-theme button[data-slot="button"][class*="bg-"][class*="text-"]:not([class*="outline"]):not([class*="ghost"]):not([class*="link"]):not([class*="secondary"]):not([class*="destructive"]):hover {
+  background-color: white !important;
+  color: var(--primary-blue) !important;
+}
+
+/* OUTLINE buttons - transparent with blue border */
 .english-theme button[data-slot="button"][class*="outline"],
 .english-theme button[data-slot="button"][class*="secondary"] {
   border-color: var(--primary-blue) !important;
@@ -370,7 +376,9 @@ html {
 
 .english-theme button[data-slot="button"][class*="outline"]:hover,
 .english-theme button[data-slot="button"][class*="secondary"]:hover {
-  background-color: var(--primary-blue-light) !important;
+  background-color: transparent !important;
+  border-color: var(--primary-blue) !important;
+  color: var(--primary-blue) !important;
 }
 
 /* Premium Theme: Purple accents for beta/premium features */
@@ -382,17 +390,30 @@ html {
   --ring: var(--primary-purple);
 }
 
-.premium-theme button[data-slot="button"]:not([class*="variant"]),
-.premium-theme button[data-slot="button"][class*="default"] {
+/* Default buttons - purple background with white text */
+.premium-theme button[data-slot="button"]:not([class*="outline"]):not([class*="ghost"]):not([class*="link"]):not([class*="secondary"]):not([class*="destructive"]) {
   background-color: var(--primary-purple) !important;
   color: white !important;
 }
 
-.premium-theme button[data-slot="button"]:not([class*="variant"]):hover,
-.premium-theme button[data-slot="button"][class*="default"]:hover {
-  background-color: var(--primary-purple-hover) !important;
+.premium-theme button[data-slot="button"]:not([class*="outline"]):not([class*="ghost"]):not([class*="link"]):not([class*="secondary"]):not([class*="destructive"]):hover {
+  background-color: white !important;
+  color: var(--primary-purple) !important;
+  opacity: 1 !important;
 }
 
+/* Additional selector for bg-/text- classes - but EXCLUDE outline */
+.premium-theme button[data-slot="button"][class*="bg-"][class*="text-"]:not([class*="outline"]):not([class*="ghost"]):not([class*="link"]):not([class*="secondary"]):not([class*="destructive"]) {
+  background-color: var(--primary-purple) !important;
+  color: white !important;
+}
+
+.premium-theme button[data-slot="button"][class*="bg-"][class*="text-"]:not([class*="outline"]):not([class*="ghost"]):not([class*="link"]):not([class*="secondary"]):not([class*="destructive"]):hover {
+  background-color: white !important;
+  color: var(--primary-purple) !important;
+}
+
+/* OUTLINE buttons - transparent with purple border */
 .premium-theme button[data-slot="button"][class*="outline"],
 .premium-theme button[data-slot="button"][class*="secondary"] {
   border-color: var(--primary-purple) !important;
@@ -402,5 +423,7 @@ html {
 
 .premium-theme button[data-slot="button"][class*="outline"]:hover,
 .premium-theme button[data-slot="button"][class*="secondary"]:hover {
-  background-color: var(--primary-purple-light) !important;
+  background-color: transparent !important;
+  border-color: var(--primary-purple) !important;
+  color: var(--primary-purple) !important;
 }
