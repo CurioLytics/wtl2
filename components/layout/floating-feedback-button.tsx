@@ -35,8 +35,13 @@ export function FloatingFeedbackButton() {
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [hasMoved, setHasMoved] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const categories = [
     { value: 'bug', label: '🐛 Lỗi kỹ thuật', color: 'bg-red-100 text-red-700' },
@@ -54,6 +59,61 @@ export function FloatingFeedbackButton() {
       scrollToBottom();
     }
   }, [messages, isOpen]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        const newX = e.clientX - dragStart.x;
+        const newY = e.clientY - dragStart.y;
+        
+        // Track if we actually moved
+        if (Math.abs(newX - position.x) > 5 || Math.abs(newY - position.y) > 5) {
+          setHasMoved(true);
+        }
+        
+        // Constrain to viewport - use a default size if container not available
+        const containerWidth = isOpen && containerRef.current ? containerRef.current.offsetWidth : 48;
+        const containerHeight = isOpen && containerRef.current ? containerRef.current.offsetHeight : 48;
+        const maxX = window.innerWidth - containerWidth - 24;
+        const maxY = window.innerHeight - containerHeight - 24;
+        
+        setPosition({
+          x: Math.max(-window.innerWidth + containerWidth + 24, Math.min(newX, maxX)),
+          y: Math.max(-24, Math.min(newY, maxY))
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isDragging) {
+        setIsDragging(false);
+        // Reset hasMoved after a brief delay to allow onClick to check it
+        setTimeout(() => setHasMoved(false), 100);
+      }
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragStart]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // For open dialog: Only start dragging if clicking on the header itself, not buttons
+    if (isOpen && (e.target as HTMLElement).closest('button')) return;
+    
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+  };
 
   const handlePaste = async (e: React.ClipboardEvent) => {
     const items = e.clipboardData.items;
@@ -164,7 +224,12 @@ export function FloatingFeedbackButton() {
     }
   };
 
-  const handleOpen = () => {
+  const handleOpen = (e: React.MouseEvent) => {
+    // Prevent opening if we just finished dragging
+    if (hasMoved) {
+      e.preventDefault();
+      return;
+    }
     setIsOpen(true);
   };
 
@@ -176,17 +241,27 @@ export function FloatingFeedbackButton() {
     <>
       {/* Floating Button */}
       {!isOpen && (
-        <div className="fixed top-6 right-6 z-50">
+        <div 
+          className="fixed z-50"
+          style={{
+            top: `${24 + position.y}px`,
+            right: `${24 - position.x}px`,
+            transition: isDragging ? 'none' : 'all 0.3s ease'
+          }}
+        >
           <Button
             onClick={handleOpen}
+            onMouseDown={handleMouseDown}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            className="h-12 sm:h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
+            className="h-12 sm:h-14 rounded-full shadow-lg hover:shadow-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center select-none"
             style={{
               width: isHovered ? 'auto' : '48px',
               paddingLeft: isHovered ? '20px' : '0',
               paddingRight: isHovered ? '20px' : '0',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              cursor: isDragging ? 'grabbing' : 'grab',
+              userSelect: 'none'
             }}
           >
             <MessageSquare className="w-5 h-5 flex-shrink-0" />
@@ -202,15 +277,26 @@ export function FloatingFeedbackButton() {
       {/* Chat Widget */}
       {isOpen && (
         <div
-          className="fixed top-6 right-6 z-50 transition-all duration-300 w-full max-w-[calc(100vw-3rem)] sm:w-96"
+          ref={containerRef}
+          className="fixed z-50 w-full max-w-[calc(100vw-3rem)] sm:w-96"
           style={{
+            top: `${24 + position.y}px`,
+            right: `${24 - position.x}px`,
             height: '600px',
-            maxHeight: 'calc(100vh - 100px)'
+            maxHeight: 'calc(100vh - 100px)',
+            transition: isDragging ? 'none' : 'all 0.3s ease'
           }}
         >
           <div className="h-full bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4 flex items-center justify-between">
+            <div 
+              className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4 flex items-center justify-between select-none"
+              onMouseDown={handleMouseDown}
+              style={{ 
+                cursor: isDragging ? 'grabbing' : 'grab',
+                userSelect: 'none'
+              }}
+            >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                   <MessageSquare className="w-5 h-5 text-white" />
@@ -223,6 +309,7 @@ export function FloatingFeedbackButton() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleClose}
+                  onMouseDown={(e) => e.stopPropagation()}
                   className="text-white/80 hover:text-white transition-colors"
                 >
                   <X className="w-5 h-5" />
