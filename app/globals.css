@@ -31,11 +31,11 @@
   --accent-blue: oklch(0.62 0.25 255); /* blue-500 */
 
   /* === Purple Theme (for Premium/Beta features) === */
-  --primary-purple: oklch(0.5 0.24 300); /* purple-600 */
-  --primary-purple-hover: oklch(0.43 0.25 300); /* purple-700 */
-  --primary-purple-light: oklch(0.95 0.05 300); /* purple-50 */
-  --primary-purple-lighter: oklch(0.91 0.08 300); /* purple-100 */
-  --accent-purple: oklch(0.57 0.25 305); /* purple-500 */
+  --primary-purple: oklch(0.553 0.25 302.71); /* purple-600 - matching Tailwind */
+  --primary-purple-hover: oklch(0.491 0.257 302.71); /* purple-700 - matching Tailwind */
+  --primary-purple-light: oklch(0.977 0.014 308.34); /* purple-50 - matching Tailwind */
+  --primary-purple-lighter: oklch(0.95 0.034 307.21); /* purple-100 - matching Tailwind */
+  --accent-purple: oklch(0.609 0.25 303.9); /* purple-500 - matching Tailwind */
 
   /* === Grays === */
   --secondary: oklch(0.92 0 0);
@@ -426,4 +426,101 @@ html {
   background-color: transparent !important;
   border-color: var(--primary-purple) !important;
   color: var(--primary-purple) !important;
+}
+/* === Reusable Button Classes === */
+
+/* Blue Primary Button */
+.btn-blue-primary {
+  background-color: var(--primary-blue) !important;
+  color: white !important;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-blue-primary:hover {
+  background-color: var(--primary-blue-hover) !important;
+}
+
+.btn-blue-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Purple Primary Button */
+.btn-purple-primary {
+  background-color: var(--primary-purple) !important;
+  color: white !important;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-purple-primary:hover {
+  background-color: var(--primary-purple-hover) !important;
+}
+
+.btn-purple-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Purple Outline Button */
+.btn-purple-outline {
+  background-color: transparent !important;
+  color: var(--primary-purple) !important;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  border: 1px solid var(--primary-purple) !important;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-purple-outline:hover {
+  background-color: var(--primary-purple-light) !important;
+}
+
+.btn-purple-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Blue Outline Button */
+.btn-blue-outline {
+  background-color: transparent !important;
+  color: var(--primary-blue) !important;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  border: 1px solid var(--primary-blue) !important;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-blue-outline:hover {
+  background-color: var(--primary-blue-light) !important;
+}
+
+.btn-blue-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

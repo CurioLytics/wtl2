@@ -341,18 +341,18 @@ export default function FlashcardCreationPage() {
                 </Button>
               </div>
             </div>
-          </div>          <div className="flex justify-between items-center mt-6 pt-4 border-t">
-            <Button variant="outline" onClick={() => router.back()}>
+          </div>          <div className="flex justify-end items-center gap-3 mt-6 pt-4 ">
+            <button onClick={() => router.back()} className="btn-blue-outline">
               Quay về
-            </Button>
+            </button>
 
-            <Button
+            <button
               onClick={handleSaveFlashcards}
               disabled={isSaving || flashcards.length === 0 || !selectedSetId}
-              className="bg-gray-900 hover:bg-gray-800 text-white"
+              className="btn-blue-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSaving ? 'Đang lưu...' : selectedSetId ? 'Lưu vào bộ từ vựng' : 'Chọn bộ từ vựng'}
-            </Button>
+              {isSaving ? 'Đang lưu...' : selectedSetId ? 'Lưu' : 'Chọn bộ từ vựng'}
+            </button>
           </div>
         </div>
       </div>

@@ -92,6 +92,20 @@ export default function RoleplaySummaryPage() {
       return;
     }
 
+    // If no highlights, just save and redirect immediately
+    if (highlights.length === 0 && selectedGrammar.size === 0) {
+      try {
+        await roleplaySessionService.saveHighlights(
+          params.sessionId as string,
+          []
+        );
+        router.push('/roleplay');
+      } catch (err: any) {
+        setError(err?.message || 'Không thể lưu session');
+      }
+      return;
+    }
+
     setProcessing(true);
     setError(null);
 
@@ -108,12 +122,8 @@ export default function RoleplaySummaryPage() {
       );
 
       // Store flashcards and navigate to flashcard generation page
-      if (highlights.length > 0) {
-        localStorage.setItem('flashcardData', JSON.stringify(result.flashcards));
-        router.push('/flashcards/generate');
-      } else {
-        router.push('/roleplay');
-      }
+      localStorage.setItem('flashcardData', JSON.stringify(result.flashcards));
+      router.push('/flashcards/generate');
     } catch (err: any) {
       setError(err?.message || 'Không thể lưu session');
       setProcessing(false);
@@ -508,12 +518,12 @@ export default function RoleplaySummaryPage() {
 
           {/* Actions */}
           <div className="flex justify-end gap-4 w-full">
-            <Button variant="outline" onClick={handleBack}>
+            <button onClick={handleBack} className="btn-blue-outline">
               Hủy
-            </Button>
-            <Button onClick={handleSave} disabled={processing}>
+            </button>
+            <button onClick={handleSave} disabled={processing} className="btn-blue-primary">
               {highlights.length > 0 ? 'Lưu session & Tạo Flashcard' : 'Lưu session'}
-            </Button>
+            </button>
           </div>
         </div>
       </div>

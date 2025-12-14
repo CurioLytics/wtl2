@@ -95,28 +95,24 @@ export default function ChatSessionPage() {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center w-full">
-          <div className={styles.typingIndicator}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-          <p className="text-gray-600 mt-4">Đang tải hội thoại...</p>
+      <div className="max-w-3xl mx-auto px-4 py-8 text-center min-h-[60vh] flex flex-col items-center justify-center">
+        <div className={styles.typingIndicator}>
+          <span></span>
+          <span></span>
+          <span></span>
         </div>
+        <p className="text-gray-600 mt-4">Đang tải hội thoại...</p>
       </div>
     );
   }
 
   if (error || !scenario) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
-        <div className="bg-white rounded-2xl shadow p-6 text-center w-full">
+      <div className="max-w-3xl mx-auto px-4 py-8 min-h-[60vh] flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow p-6 text-center">
           <h2 className="text-xl font-medium text-gray-800 mb-4">Lỗi</h2>
           <p className="text-gray-600 mb-6">{error || 'Không tìm thấy tình huống'}</p>
-          <Button
-            onClick={handleBack}
-          >
+          <Button onClick={handleBack}>
             Quay lại chi tiết tình huống
           </Button>
         </div>
@@ -125,14 +121,12 @@ export default function ChatSessionPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 flex flex-col space-y-8">
-      <div className="bg-white shadow rounded-2xl p-6 flex flex-col">
-        {mode === 'voice' ? (
-          <VoiceModeChatInterface scenario={scenario} />
-        ) : (
-          <ChatInterface scenario={scenario} />
-        )}
-      </div>
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      {mode === 'voice' ? (
+        <VoiceModeChatInterface scenario={scenario} />
+      ) : (
+        <ChatInterface scenario={scenario} />
+      )}
 
       <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
         <AlertDialogContent>

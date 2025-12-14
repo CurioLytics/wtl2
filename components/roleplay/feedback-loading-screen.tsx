@@ -33,9 +33,9 @@ export function FeedbackLoadingScreen({
         const interval = setInterval(() => {
             setLoadingStep(prev => {
                 if (prev < steps.length - 1) return prev + 1;
-                return 0; // Loop back to start
+                return prev; // Stay at last step, don't loop
             });
-        }, 3000); // Change every 2 seconds
+        }, 4000); // Change every 4 seconds
 
         return () => clearInterval(interval);
     }, [isVisible, steps]);

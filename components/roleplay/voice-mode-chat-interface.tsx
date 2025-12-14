@@ -1,70 +1,30 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger
-} from '@/components/ui/alert-dialog';
 import { MessageBubble } from './message-bubble';
 import { FeedbackLoadingScreen } from './feedback-loading-screen';
+import { SharedChatHeader } from './shared-chat-header';
+import { useSharedChatLogic, getClosingMessage } from './shared-chat-logic';
 import { useVoiceMode } from '@/hooks/roleplay/use-voice-mode';
-import { roleplayConversationService } from '@/services/roleplay/roleplay-conversation-service';
-import { roleplaySessionService } from '@/services/roleplay/roleplay-session-service';
-import { useAuth } from '@/hooks/auth/use-auth';
 import { RoleplayMessage, RoleplayScenario } from '@/types/roleplay';
-import { Mic, MicOff, Send, Keyboard, Lightbulb } from 'lucide-react';
+import { Mic, Send, Keyboard } from 'lucide-react';
 
 interface VoiceModeChatInterfaceProps {
   scenario: RoleplayScenario;
 }
 
 export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps) {
-  const router = useRouter();
-  const { user, userPreferences: cachedPreferences } = useAuth();
+  const { state, actions, refs } = useSharedChatLogic(scenario);
+  const { messages, finishing, error, hasUserMessages } = state;
+  const { addMessage, handleFinish, handleExit, detectFinishIntent, getBotResponse } = actions;
+  const { autoFinishScheduled } = refs;
 
-  // Generate unique session ID for this conversation
-  const [sessionId] = useState(() => {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 9);
-    return `session_${timestamp}_${random}`;
-  });
-
-  const [messages, setMessages] = useState<RoleplayMessage[]>([]);
   const [backupInput, setBackupInput] = useState('');
   const [showTextInput, setShowTextInput] = useState(false);
-  const [finishing, setFinishing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Use cached preferences from auth context with defaults
-  const userPreferences = {
-    name: cachedPreferences?.name || 'User',
-    english_level: cachedPreferences?.english_level || 'intermediate',
-    style: cachedPreferences?.style || 'conversational',
-  };
 
   const endRef = useRef<HTMLDivElement>(null);
-  const hasStarted = useRef(false);
   const isSessionFinished = useRef(false);
-  const autoFinishScheduled = useRef(false);
-  const messagesRef = useRef<RoleplayMessage[]>([]);
-
-  const hasUserMessages = messages.filter(msg => msg.sender === 'user').length > 0;
 
   const handleUserMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -80,25 +40,13 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
 
     // Check if user wants to finish
     const shouldAutoFinish = detectFinishIntent(text);
-    console.log('[VOICE-AUTO-FINISH] User message:', text);
-    console.log('[VOICE-AUTO-FINISH] Should auto-finish:', shouldAutoFinish);
 
     try {
       // If user wants to finish, show a closing message instead of calling webhook
       if (shouldAutoFinish && !isSessionFinished.current && !autoFinishScheduled.current) {
         autoFinishScheduled.current = true;
-        console.log('[VOICE-AUTO-FINISH] User wants to finish, adding closing message...');
         
-        // Random closing messages
-        const closingMessages = [
-          "Wrapping up the conversation...",
-          "Finishing the conversation...",
-          "Thank you for practicing with me today!",
-          "Great job! Let me prepare your feedback...",
-          "Excellent work! Preparing your session summary..."
-        ];
-        
-        const randomClosing = closingMessages[Math.floor(Math.random() * closingMessages.length)];
+        const randomClosing = getClosingMessage();
         
         const botMsg: RoleplayMessage = {
           id: `bot-${Date.now()}`,
@@ -114,9 +62,7 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
         }
 
         // Schedule auto-finish after audio plays
-        console.log('[VOICE-AUTO-FINISH] Scheduling auto-finish after audio completes...');
         setTimeout(() => {
-          console.log('[VOICE-AUTO-FINISH] Initial delay complete, executing handleFinish...');
           handleFinish();
         }, 5000); // Wait 5 seconds to allow audio to play
         
@@ -124,12 +70,7 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
       }
 
       // Normal flow: call webhook for bot response
-      const reply = await roleplayConversationService.getBotResponse(
-        scenario,
-        [...messages, userMsg],
-        sessionId,
-        userPreferences
-      );
+      const reply = await getBotResponse(userMsg);
 
       // Check if session was finished while waiting for response
       if (isSessionFinished.current) return;
@@ -177,37 +118,7 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
     onUserMessage: handleUserMessage,
   });
 
-  const addMessage = (msg: RoleplayMessage) =>
-    setMessages((prev) => {
-      const updated = [...prev, msg];
-      messagesRef.current = updated;
-      return updated;
-    });
 
-  // Detect if user wants to finish the conversation
-  const detectFinishIntent = (message: string): boolean => {
-    const lowerMessage = message.toLowerCase().trim();
-    const finishPhrases = [
-      'finish the conversation',
-      'finish talking',
-      'thank you for the chat',
-      'goodbye',
-      'good bye',
-      'talk to you later',
-      'bye',
-      'see you later',
-      'see you',
-      'gotta go',
-      'have to go',
-      'need to go'
-    ];
-    
-    const result = finishPhrases.some(phrase => lowerMessage.includes(phrase));
-    console.log('[VOICE-DETECT-FINISH] Checking message:', message);
-    console.log('[VOICE-DETECT-FINISH] Lower message:', lowerMessage);
-    console.log('[VOICE-DETECT-FINISH] Result:', result);
-    return result;
-  };
 
   // Countdown state
   const [countdown, setCountdown] = useState<number | null>(3);
@@ -236,37 +147,6 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Prevent navigation/reload when there are user messages
-  useEffect(() => {
-    if (!hasUserMessages) return;
-
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-
-    const handlePopState = (e: PopStateEvent) => {
-      if (hasUserMessages) {
-        const confirmLeave = window.confirm(
-          'Bạn đã có tin nhắn trong cuộc trò chuyện này. Nếu thoát bây giờ, cuộc trò chuyện sẽ không được lưu lại. Bạn có chắc muốn thoát?'
-        );
-
-        if (!confirmLeave) {
-          window.history.pushState(null, '', window.location.href);
-        }
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('popstate', handlePopState);
-    window.history.pushState(null, '', window.location.href);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [hasUserMessages]);
-
   const handleMicClick = () => {
     // Don't allow mic interaction if session is finished
     if (isSessionFinished.current) return;
@@ -293,63 +173,14 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
     setBackupInput('');
   };
 
-  const handleFinish = async () => {
-    console.log('[VOICE-HANDLE-FINISH] Starting handleFinish...');
-    console.log('[VOICE-HANDLE-FINISH] User ID:', user?.id);
-    console.log('[VOICE-HANDLE-FINISH] Messages count:', messages.length);
-    console.log('[VOICE-HANDLE-FINISH] isSessionFinished:', isSessionFinished.current);
-    console.log('[VOICE-HANDLE-FINISH] finishing state:', finishing);
+  const wrappedHandleFinish = async () => {
+    if (isSessionFinished.current) return;
     
-    // Prevent duplicate calls
-    if (isSessionFinished.current || finishing) {
-      console.log('[VOICE-HANDLE-FINISH] Already finishing, skipping duplicate call');
-      return;
-    }
-    
-    // Mark session as finished to prevent any further processing
     isSessionFinished.current = true;
-
-    // Stop all ongoing actions first
     stopListening();
     stopBotSpeaking();
 
-    setFinishing(true);
-    setError(null);
-
-    try {
-      // Get current messages from ref (always has latest value)
-      const currentMessages = messagesRef.current;
-
-      if (!user?.id || currentMessages.length <= 1) {
-        console.error('[VOICE-HANDLE-FINISH] Validation failed - insufficient data');
-        console.error('[VOICE-HANDLE-FINISH] Messages length:', currentMessages.length);
-        throw new Error('Unable to save session. Please try again.');
-      }
-
-      console.log('[VOICE-HANDLE-FINISH] Calling completeSession with', currentMessages.length, 'messages');
-      const sessionId = await roleplaySessionService.completeSession(
-        user.id,
-        scenario,
-        currentMessages,
-        userPreferences
-      );
-
-      console.log('[VOICE-HANDLE-FINISH] Session completed, ID:', sessionId);
-      console.log('[VOICE-HANDLE-FINISH] Redirecting to summary page...');
-      // Keep loading screen visible during navigation
-      router.replace(`/roleplay/summary/${sessionId}`);
-      // Don't set finishing to false - let the navigation happen with loading screen visible
-    } catch (error: any) {
-      console.error('[VOICE-HANDLE-FINISH] Error:', error);
-      setError(error?.message || 'Error saving session. Please try again.');
-      // Reset the flag if there's an error so user can try again
-      isSessionFinished.current = false;
-      setFinishing(false); // Only hide loading on error
-    }
-  };
-
-  const handleExit = () => {
-    router.push(`/roleplay/${scenario.id}`);
+    await handleFinish();
   };
 
   // Mic button states
@@ -373,77 +204,15 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
 
       <div className="flex flex-col h-[calc(100vh-8rem)] bg-gradient-to-b from-gray-50 to-white rounded-lg shadow-sm overflow-hidden">
 
-        {/* Header */}
-        <div className="p-3 border-b flex justify-between items-center bg-white">
-          <Dialog>
-            <DialogTrigger asChild>
-              <button
-                aria-label="Show roleplay task"
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition"
-              >
-                <Lightbulb className="w-4 h-4" />
-              </button>
-            </DialogTrigger>
-            <DialogContent className="bg-white max-w-md">
-              <DialogHeader>
-                <DialogTitle>Roleplay Task</DialogTitle>
-              </DialogHeader>
-              <div className="mt-4 space-y-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Nhiệm vụ:</h3>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                    {scenario.task || 'No task available'}
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Câu mở đầu gợi ý:</h3>
-                  <p className="text-sm text-gray-600 italic bg-blue-50 p-3 rounded-md">
-                    "{scenario.starter_message}"
-                  </p>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <div className="flex items-center gap-2">
-            {hasUserMessages ? (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50">
-                    Thoát
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Thoát khỏi cuộc trò chuyện?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Bạn đã có tin nhắn trong cuộc trò chuyện này. Nếu thoát bây giờ, cuộc trò chuyện sẽ không được lưu lại.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Hủy</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleExit} className="bg-red-600 hover:bg-red-700">
-                      Thoát
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            ) : (
-              <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={handleExit}>
-                Thoát
-              </Button>
-            )}
-
-            <Button
-              onClick={handleFinish}
-              disabled={finishing || messages.length <= 1}
-              variant="outline"
-              size="sm"
-            >
-              {finishing ? 'Saving...' : 'Finish'}
-            </Button>
-          </div>
-        </div>
+        <SharedChatHeader
+          scenario={scenario}
+          hasUserMessages={hasUserMessages}
+          finishing={finishing}
+          messagesLength={messages.length}
+          onFinish={wrappedHandleFinish}
+          onExit={handleExit}
+          theme="purple"
+        />
 
         {/* Chat */}
         <div className="flex-1 p-4 overflow-y-auto">

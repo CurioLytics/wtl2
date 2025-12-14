@@ -86,13 +86,12 @@ export function ScenarioDetail({ scenario }: ScenarioDetailProps) {
         </div>
 
         <div className="flex justify-center">
-          <Button
-            variant="default"
+          <button
             onClick={handleStartSession}
-            className="px-6 py-2 rounded-md"
+            className="btn-blue-primary shadow-sm"
           >
             Let's go
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -181,22 +180,21 @@ export function ScenarioDetail({ scenario }: ScenarioDetailProps) {
           </div>
 
           <DialogFooter className="flex gap-2 sm:gap-2">
-            <Button
-              variant="outline"
+            <button
               onClick={() => {
                 setShowVoiceWarning(false);
                 setShowModeDialog(true);
               }}
-              className="flex-1"
+              className="btn-purple-outline flex-1"
             >
               Quay lại
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={() => startWithMode('voice')}
-              className="flex-1 bg-[var(--primary-purple)] hover:bg-[var(--primary-purple-hover)]"
+              className="btn-purple-primary flex-1"
             >
               Chơi luôn!
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

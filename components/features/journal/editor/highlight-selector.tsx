@@ -242,14 +242,7 @@ export const HighlightSelector: React.FC<HighlightSelectorProps> = ({
           setSelectedText('');
           window.getSelection()?.removeAllRanges();
         }}
-        className="
-          bg-gray-900 text-white text-sm font-medium
-          px-3 py-2 rounded-full shadow-lg
-          flex items-center gap-1.5
-          hover:bg-gray-800 active:scale-95
-          focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-700
-          whitespace-nowrap
-        "
+        className="btn-blue-primary shadow-lg flex items-center gap-1.5 whitespace-nowrap"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -261,7 +254,6 @@ export const HighlightSelector: React.FC<HighlightSelectorProps> = ({
         >
           <path d="M5 13l4 4L19 7" />
         </svg>
-        Save
       </button>
     </div>
   );
