@@ -23,6 +23,7 @@ export default function RoleplaySummaryPage() {
   const { user, loading: authLoading, userPreferences: cachedPreferences } = useAuth();
   const [sessionData, setSessionData] = useState<RoleplaySessionData | null>(null);
   const [highlights, setHighlights] = useState<string[]>([]);
+  const [selectedGrammar, setSelectedGrammar] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [retrying, setRetrying] = useState(false);
@@ -50,6 +51,7 @@ export default function RoleplaySummaryPage() {
     const loadSession = async () => {
       try {
         const data = await roleplaySessionService.getSessionWithFeedback(params.sessionId as string);
+        console.log('[SUMMARY-PAGE] Session loaded, has feedback:', !!data.feedback);
         setSessionData(data);
         setHighlights(data.highlights || []);
       } catch (err: any) {
@@ -72,8 +74,20 @@ export default function RoleplaySummaryPage() {
     setHighlights(highlights.filter((_, i) => i !== index));
   };
 
+  const toggleGrammarSelection = (index: number) => {
+    setSelectedGrammar(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
   const handleSave = async () => {
-    if (!user?.id || !sessionData || !highlights.length) {
+    if (!user?.id || !sessionData) {
       router.push('/roleplay');
       return;
     }
@@ -82,18 +96,26 @@ export default function RoleplaySummaryPage() {
     setError(null);
 
     try {
+      // Convert Set to array of selected indices
+      const selectedGrammarIndices = Array.from(selectedGrammar);
+      
       const result = await roleplaySessionService.saveHighlightsAndGenerateFlashcards(
         params.sessionId as string,
         highlights,
         sessionData,
-        user.id
+        user.id,
+        selectedGrammarIndices
       );
 
       // Store flashcards and navigate to flashcard generation page
-      localStorage.setItem('flashcardData', JSON.stringify(result.flashcards));
-      router.push('/flashcards/generate');
+      if (highlights.length > 0) {
+        localStorage.setItem('flashcardData', JSON.stringify(result.flashcards));
+        router.push('/flashcards/generate');
+      } else {
+        router.push('/roleplay');
+      }
     } catch (err: any) {
-      setError(err?.message || 'Không thể lưu đoạn nổi bật');
+      setError(err?.message || 'Không thể lưu session');
       setProcessing(false);
     }
   };
@@ -197,23 +219,98 @@ export default function RoleplaySummaryPage() {
   }
 
   const sections = [
-    { id: 'feedback', label: 'Nhận xét' },
-    { id: 'highlights', label: 'Từ đánh dấu' },
+    { id: 'conversation', label: 'Lịch sử' },
+    { id: 'comparison', label: 'So sánh' },
+    { id: 'vocabulary', label: 'Từ vựng' },
+    { id: 'grammar', label: 'Ngữ pháp' },
+    { id: 'highlights', label: 'Đánh dấu' },
   ];
+
+  // Parse enhanced_version: stringified JSON array of plain strings
+  const parseEnhancedVersion = (enhancedVersion: any): string[] => {
+    if (!enhancedVersion) return [];
+    
+    // If it's already an array, return it
+    if (Array.isArray(enhancedVersion)) {
+      return enhancedVersion.map(item => String(item));
+    }
+    
+    // If it's a string, parse it
+    if (typeof enhancedVersion === 'string') {
+      try {
+        const parsed = JSON.parse(enhancedVersion);
+        if (Array.isArray(parsed)) {
+          return parsed.map(item => String(item));
+        }
+        return [enhancedVersion];
+      } catch {
+        return [enhancedVersion];
+      }
+    }
+    
+    return [];
+  };
+
+  // Parse output.vocabulary: stringified JSON array of "old → new" strings
+  const parseVocabulary = (vocabulary: any): string[] => {
+    if (!vocabulary) return [];
+    
+    // If it's already an array, return it
+    if (Array.isArray(vocabulary)) {
+      return vocabulary;
+    }
+    
+    // If it's a string, parse it
+    if (typeof vocabulary === 'string') {
+      try {
+        const parsed = JSON.parse(vocabulary);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+        return [vocabulary];
+      } catch {
+        // Fallback: split by newlines
+        return vocabulary.split('\n').filter(line => line.trim());
+      }
+    }
+    
+    return [];
+  };
+
+  const enhancedMessages = sessionData?.feedback?.enhanced_version 
+    ? parseEnhancedVersion(sessionData.feedback.enhanced_version) 
+    : [];
+  
+  const vocabularyList = sessionData?.feedback?.output?.vocabulary
+    ? parseVocabulary(sessionData.feedback.output.vocabulary)
+    : [];
+
+  const grammarDetails = sessionData?.feedback?.grammar_details || [];
+
+  const userMessages = sessionData?.messages?.filter((msg: any) => msg.sender === 'user') || [];
+
+  // Debug logging
+  console.log('[SUMMARY-PAGE] Session Data:', sessionData);
+  console.log('[SUMMARY-PAGE] Has Feedback:', !!sessionData?.feedback);
+  console.log('[SUMMARY-PAGE] Enhanced Version Raw:', sessionData?.feedback?.enhanced_version);
+  console.log('[SUMMARY-PAGE] User Messages:', userMessages.length);
+  console.log('[SUMMARY-PAGE] Enhanced Messages:', enhancedMessages.length);
+  console.log('[SUMMARY-PAGE] Vocabulary List:', vocabularyList.length);
+  console.log('[SUMMARY-PAGE] Grammar Details:', grammarDetails.length);
 
   return (
     <div className="flex-1 flex flex-col" style={{ transition: '0.3s ease-in-out', width: '100%' }}>
       <SectionNavigation sections={sections} />
-      <div className="w-full max-w-4xl mx-auto">
+      <div className="w-full max-w-6xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-blue-600 mb-4">{sessionData.scenario_name}</h1>
 
-            {/* Messages Accordion */}
-            <div id="messages" className="scroll-mt-20">
+            {/* Original Conversation History */}
+            <div id="conversation" className="scroll-mt-20 mb-8">
               <Accordion type="single" collapsible className="mb-6">
                 <AccordionItem value="messages">
-                  <AccordionTrigger>Lịch sử hội thoại</AccordionTrigger>
+                  <AccordionTrigger>Xem toàn bộ hội thoại</AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-3 max-h-[400px] overflow-y-auto">
                       {sessionData.messages?.map((message: any, index: number) => (
@@ -231,10 +328,10 @@ export default function RoleplaySummaryPage() {
             </div>
           </div>
 
-          {/* Feedback Tabs */}
+          {/* Feedback Section */}
           <div id="feedback" className="scroll-mt-20">
             {sessionData.feedback ? (
-              <div className="mb-8">
+              <div className="mb-8 space-y-8">
                 <div className="flex items-center justify-between mb-4">
                   <button
                     onClick={handleRetryFeedback}
@@ -246,137 +343,136 @@ export default function RoleplaySummaryPage() {
                   </button>
                 </div>
 
-                <Tabs defaultValue="clarity" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="clarity">Độ rõ ràng</TabsTrigger>
-                    <TabsTrigger value="vocabulary">Từ vựng</TabsTrigger>
-                    <TabsTrigger value="ideas">Ý tưởng</TabsTrigger>
-                    <TabsTrigger value="enhanced">Bản final</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="clarity" className="mt-4">
-                    <div
-                      id="clarity-content"
-                      className="whitespace-pre-wrap text-gray-800 leading-relaxed p-4 bg-gray-50 rounded-lg min-h-[200px]"
-                      style={{
-                        userSelect: 'text',
-                        WebkitUserSelect: 'text',
-                        MozUserSelect: 'text',
-                        msUserSelect: 'text'
-                      }}
-                    >
-                      {sessionData.feedback.output?.clarity || 'Không có nội dung'}
-                    </div>
-                    <HighlightSelector
-                      containerId="clarity-content"
-                      onHighlightSaved={addHighlight}
-                      highlights={highlights}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="vocabulary" className="mt-4">
-                    <div
-                      id="vocabulary-content"
-                      className="whitespace-pre-wrap text-gray-800 leading-relaxed p-4 bg-gray-50 rounded-lg min-h-[200px]"
-                      style={{
-                        userSelect: 'text',
-                        WebkitUserSelect: 'text',
-                        MozUserSelect: 'text',
-                        msUserSelect: 'text'
-                      }}
-                    >
-                      {sessionData.feedback.output?.vocabulary || 'Không có nội dung'}
-                    </div>
-                    <HighlightSelector
-                      containerId="vocabulary-content"
-                      onHighlightSaved={addHighlight}
-                      highlights={highlights}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="ideas" className="mt-4">
-                    <div
-                      id="ideas-content"
-                      className="whitespace-pre-wrap text-gray-800 leading-relaxed p-4 bg-gray-50 rounded-lg min-h-[200px]"
-                      style={{
-                        userSelect: 'text',
-                        WebkitUserSelect: 'text',
-                        MozUserSelect: 'text',
-                        msUserSelect: 'text'
-                      }}
-                    >
-                      {sessionData.feedback.output?.ideas || 'Không có nội dung'}
-                    </div>
-                    <HighlightSelector
-                      containerId="ideas-content"
-                      onHighlightSaved={addHighlight}
-                      highlights={highlights}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="enhanced" className="mt-4">
-                    <div
-                      id="enhanced-content"
-                      className="space-y-3 p-4 bg-gray-50 rounded-lg min-h-[200px]"
-                      style={{
-                        userSelect: 'text',
-                        WebkitUserSelect: 'text',
-                        MozUserSelect: 'text',
-                        msUserSelect: 'text'
-                      }}
-                    >
-                      {(() => {
-                        const enhancedVersion = sessionData.feedback.enhanced_version;
-                        if (!enhancedVersion) return 'Không có nội dung';
-
-                        // Check if it's an array (either actual array or stringified array)
-                        let messages: string[] = [];
-                        if (Array.isArray(enhancedVersion)) {
-                          messages = enhancedVersion;
-                        } else if (typeof enhancedVersion === 'string') {
-                          try {
-                            const parsed = JSON.parse(enhancedVersion);
-                            messages = Array.isArray(parsed) ? parsed : [enhancedVersion];
-                          } catch {
-                            messages = [enhancedVersion];
-                          }
-                        }
-
-                        return messages.map((msg, idx) => (
-                          <div key={idx} className="bg-white p-3 rounded-lg border border-gray-200 text-gray-800 leading-relaxed">
-                            {msg}
+                {/* Side-by-Side Comparison */}
+                <div id="comparison" className="scroll-mt-20">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Original Messages */}
+                    <div>
+                      <div className="bg-red-50 border border-red-200 rounded-t-lg p-3">
+                        <h4 className="font-medium text-red-800">Phiên bản của bạn</h4>
+                      </div>
+                      <div className="bg-white border border-red-200 border-t-0 rounded-b-lg p-4 space-y-3">
+                        {userMessages.map((msg: any, idx: number) => (
+                          <div 
+                            key={idx} 
+                            className="p-3 bg-gray-50 rounded-lg text-gray-800 leading-relaxed"
+                            style={{
+                              userSelect: 'text',
+                              WebkitUserSelect: 'text',
+                              MozUserSelect: 'text',
+                              msUserSelect: 'text'
+                            }}
+                          >
+                            {msg.content}
                           </div>
-                        ));
-                      })()}
+                        ))}
+                      </div>
                     </div>
-                    <HighlightSelector
-                      containerId="enhanced-content"
-                      onHighlightSaved={addHighlight}
-                      highlights={highlights}
-                    />
-                  </TabsContent>
-                </Tabs>
+
+                    {/* Enhanced Messages */}
+                    <div>
+                      <div className="bg-green-50 border border-green-200 rounded-t-lg p-3">
+                        <h4 className="font-medium text-green-800">Phiên bản cải thiện</h4>
+                      </div>
+                      <div className="bg-white border border-green-200 border-t-0 rounded-b-lg p-4 space-y-3">
+                        {enhancedMessages.length > 0 ? (
+                          enhancedMessages.map((msg: string, idx: number) => (
+                            <div 
+                              key={idx} 
+                              className="p-3 bg-green-50 rounded-lg text-gray-800 leading-relaxed"
+                              style={{
+                                userSelect: 'text',
+                                WebkitUserSelect: 'text',
+                                MozUserSelect: 'text',
+                                msUserSelect: 'text'
+                              }}
+                            >
+                              {msg}
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-gray-500 text-center py-4">Không có phiên bản cải thiện</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <HighlightSelector
+                    containerId="comparison"
+                    onHighlightSaved={addHighlight}
+                    highlights={highlights}
+                  />
+                </div>
+
+                {/* Vocabulary Section */}
+                <div id="vocabulary" className="scroll-mt-20">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Từ vựng, mẫu câu</h3>
+                  {vocabularyList.length > 0 ? (
+                    <div 
+                      id="vocabulary-content"
+                      className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2"
+                      style={{
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text',
+                        MozUserSelect: 'text',
+                        msUserSelect: 'text'
+                      }}
+                    >
+                      {vocabularyList.map((item: string, idx: number) => (
+                        <div key={idx} className="flex items-center gap-3 bg-white p-3 rounded-lg">
+                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-medium">
+                            {idx + 1}
+                          </span>
+                          <span className="text-gray-800 leading-relaxed">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-4 bg-gray-50 rounded-lg">Không có gợi ý từ vựng</p>
+                  )}
+                  <HighlightSelector
+                    containerId="vocabulary-content"
+                    onHighlightSaved={addHighlight}
+                    highlights={highlights}
+                  />
+                </div>
 
                 {/* Grammar Details */}
                 <div id="grammar" className="scroll-mt-20">
                   {sessionData.feedback.grammar_details?.length > 0 && (
-                    <div className="mt-6">
-                      <h3 className="text-lg font-semibold text-gray-700 mb-4">Grammar Corrections</h3>
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-700">Ngữ pháp cần chú ý</h3>
+                        <span className="text-sm text-gray-500">
+                          {selectedGrammar.size} / {sessionData.feedback.grammar_details.length} được chọn
+                        </span>
+                      </div>
                       <div className="space-y-4">
                         {sessionData.feedback.grammar_details.map((detail: GrammarDetail, index: number) => (
                           <Card key={index} className="hover:shadow-md transition-shadow border-0 bg-white">
                             <CardContent className="p-4">
-                              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                                <span className="text-sm font-medium text-blue-600">
-                                  {detail.grammar_topic_id.replace(/_/g, ' ')}
-                                </span>
-                                {detail.tags?.map(tag => (
-                                  <span key={tag} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                    {tag}
-                                  </span>
-                                ))}
+                              <div className="flex gap-3">
+                                <div className="flex-shrink-0 pt-1">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedGrammar.has(index)}
+                                    onChange={() => toggleGrammarSelection(index)}
+                                    className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                    <span className="text-sm font-medium text-blue-600">
+                                      {detail.grammar_topic_id.replace(/_/g, ' ')}
+                                    </span>
+                                    {detail.tags?.map(tag => (
+                                      <span key={tag} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                  <div className="text-gray-800 whitespace-pre-wrap">{detail.description}</div>
+                                </div>
                               </div>
-                              <div className="text-gray-800 whitespace-pre-wrap">{detail.description}</div>
                             </CardContent>
                           </Card>
                         ))}

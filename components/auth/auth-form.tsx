@@ -4,7 +4,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
-import { signInWithEmail, signUpWithEmail } from '@/services/auth-service';
+import { signInWithEmail, signUpWithEmail } from '@/services/auth/auth-service';
 import { OAuthButtons } from './oauth-buttons';
 import { VerificationStep } from './verification-step';
 import type { User } from '@supabase/supabase-js';

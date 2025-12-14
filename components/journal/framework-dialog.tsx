@@ -4,7 +4,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Framework, frameworkService } from '@/services/framework-service';
+import { Framework, frameworkService } from '@/services/journal/framework-service';
 import { Pin, Plus, X, Trash2 } from 'lucide-react';
 
 interface FrameworkDialogProps {

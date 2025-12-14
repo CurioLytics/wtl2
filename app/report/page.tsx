@@ -55,7 +55,7 @@ export default function ReportPage() {
         const params = new URLSearchParams({
           timezoneOffset: timezoneOffset.toString(),
         });
-        
+
         const response = await fetch(`/api/analytics/monthly-goals?${params}`);
         const result = await response.json();
 
@@ -77,7 +77,7 @@ export default function ReportPage() {
   // Loading state
   if (isLoading && !data) {
     return (
-      <div className="max-w-3xl mx-auto px-4 space-y-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 space-y-8 py-8">
         <div className="bg-white shadow rounded-2xl p-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Report</h1>
 
@@ -121,7 +121,7 @@ export default function ReportPage() {
   // Error state
   if (error) {
     return (
-      <div className="max-w-3xl mx-auto px-4 space-y-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 space-y-8 py-8">
         <div className="bg-white shadow rounded-2xl p-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Report</h1>
 
@@ -143,7 +143,7 @@ export default function ReportPage() {
   const isStreakActive = streak && streak.current_streak > 0;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 space-y-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 space-y-8 py-8">
       <SectionNavigation sections={[
         { id: 'overview', label: 'Overview' },
         { id: 'activity', label: 'Activity' },
@@ -162,13 +162,35 @@ export default function ReportPage() {
       </div>
 
       <div id="overview" className="space-y-8">
-        {/* Reorganized Layout: 2 columns */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Column 1: Daily Goals (full height) */}
-          <div>
+        {/* Reorganized Layout: Daily Goal (1/3) + Weekly Activity (2/3) */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Column 1: Daily Goals */}
+          <div className="lg:col-span-1">
             <DailyGoalCard
               data={data?.dailyGoal || null}
               isLoading={isLoading}
+            />
+          </div>
+
+          <div id="activity" className="lg:col-span-2">
+            <WeeklyActivityChart
+              data={data?.weeklyActivity || []}
+              isLoading={isLoading}
+              action={
+                <div className="flex gap-2 flex-wrap justify-end">
+                  {DATE_PRESETS.map((preset) => (
+                    <Button
+                      key={preset.value}
+                      variant={datePreset === preset.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDatePreset(preset.value)}
+                      className={datePreset === preset.value ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'border-blue-600 text-blue-600 hover:bg-blue-50'}
+                    >
+                      {preset.label}
+                    </Button>
+                  ))}
+                </div>
+              }
             />
           </div>
 
@@ -260,29 +282,7 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* Second Row: Weekly Activity Chart with Date Filter */}
-        <div id="activity">
-          {/* Date Filter - Right aligned above chart */}
-          <div className="flex gap-2 flex-wrap justify-end mb-4">
-            {DATE_PRESETS.map((preset) => (
-              <Button
-                key={preset.value}
-                variant={datePreset === preset.value ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setDatePreset(preset.value)}
-                className={datePreset === preset.value ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'border-blue-600 text-blue-600 hover:bg-blue-50'}
-              >
-                {preset.label}
-              </Button>
-            ))}
-          </div>
 
-          {/* Weekly Activity Chart */}
-          <WeeklyActivityChart
-            data={data?.weeklyActivity || []}
-            isLoading={isLoading}
-          />
-        </div>
 
         {/* Grammar Error Analysis - Full width */}
         <div id="grammar">

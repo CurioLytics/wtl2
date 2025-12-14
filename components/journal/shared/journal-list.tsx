@@ -4,6 +4,7 @@ import React from 'react';
 import { Journal } from '@/types/journal';
 import { formatDistanceToNow } from '@/utils/date-utils';
 import { cn } from '@/utils/ui';
+import { EmptyStateCard } from '@/components/ui/empty-state';
 
 interface JournalListProps {
   journals: Journal[];
@@ -35,14 +36,13 @@ export function JournalList({
 
   if (journals.length === 0) {
     return (
-      <div className={cn(
-        "text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300",
-        className
-      )}>
-        <div className="text-4xl mb-3">{emptyState.icon}</div>
-        <h3 className="text-lg font-medium text-gray-800 mb-2">{emptyState.title}</h3>
-        <p className="text-sm text-gray-600">{emptyState.description}</p>
-      </div>
+      <EmptyStateCard
+        icon={emptyState.icon}
+        title={emptyState.title}
+        description={emptyState.description}
+        className={className}
+        bordered
+      />
     );
   }
 

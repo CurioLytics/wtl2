@@ -1,5 +1,5 @@
 import { createSupabaseClient } from '@/services/supabase/auth-helpers';
-import { analyticsService } from '@/services/analytics-service';
+import { analyticsService } from '@/services/analytics/analytics-service';
 
 export interface CreateVocabularySetRequest {
   title: string;

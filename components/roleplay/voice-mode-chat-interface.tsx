@@ -61,6 +61,8 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
   const endRef = useRef<HTMLDivElement>(null);
   const hasStarted = useRef(false);
   const isSessionFinished = useRef(false);
+  const autoFinishScheduled = useRef(false);
+  const messagesRef = useRef<RoleplayMessage[]>([]);
 
   const hasUserMessages = messages.filter(msg => msg.sender === 'user').length > 0;
 
@@ -76,7 +78,52 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
 
     addMessage(userMsg);
 
+    // Check if user wants to finish
+    const shouldAutoFinish = detectFinishIntent(text);
+    console.log('[VOICE-AUTO-FINISH] User message:', text);
+    console.log('[VOICE-AUTO-FINISH] Should auto-finish:', shouldAutoFinish);
+
     try {
+      // If user wants to finish, show a closing message instead of calling webhook
+      if (shouldAutoFinish && !isSessionFinished.current && !autoFinishScheduled.current) {
+        autoFinishScheduled.current = true;
+        console.log('[VOICE-AUTO-FINISH] User wants to finish, adding closing message...');
+        
+        // Random closing messages
+        const closingMessages = [
+          "Wrapping up the conversation...",
+          "Finishing the conversation...",
+          "Thank you for practicing with me today!",
+          "Great job! Let me prepare your feedback...",
+          "Excellent work! Preparing your session summary..."
+        ];
+        
+        const randomClosing = closingMessages[Math.floor(Math.random() * closingMessages.length)];
+        
+        const botMsg: RoleplayMessage = {
+          id: `bot-${Date.now()}`,
+          content: randomClosing,
+          sender: 'bot',
+          timestamp: Date.now(),
+        };
+        addMessage(botMsg);
+
+        // Auto-play closing message
+        if (!isSessionFinished.current) {
+          playBotMessage(randomClosing, botMsg.id);
+        }
+
+        // Schedule auto-finish after audio plays
+        console.log('[VOICE-AUTO-FINISH] Scheduling auto-finish after audio completes...');
+        setTimeout(() => {
+          console.log('[VOICE-AUTO-FINISH] Initial delay complete, executing handleFinish...');
+          handleFinish();
+        }, 5000); // Wait 5 seconds to allow audio to play
+        
+        return; // Exit early, don't call webhook
+      }
+
+      // Normal flow: call webhook for bot response
       const reply = await roleplayConversationService.getBotResponse(
         scenario,
         [...messages, userMsg],
@@ -131,7 +178,36 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
   });
 
   const addMessage = (msg: RoleplayMessage) =>
-    setMessages((prev) => [...prev, msg]);
+    setMessages((prev) => {
+      const updated = [...prev, msg];
+      messagesRef.current = updated;
+      return updated;
+    });
+
+  // Detect if user wants to finish the conversation
+  const detectFinishIntent = (message: string): boolean => {
+    const lowerMessage = message.toLowerCase().trim();
+    const finishPhrases = [
+      'finish the conversation',
+      'finish talking',
+      'thank you for the chat',
+      'goodbye',
+      'good bye',
+      'talk to you later',
+      'bye',
+      'see you later',
+      'see you',
+      'gotta go',
+      'have to go',
+      'need to go'
+    ];
+    
+    const result = finishPhrases.some(phrase => lowerMessage.includes(phrase));
+    console.log('[VOICE-DETECT-FINISH] Checking message:', message);
+    console.log('[VOICE-DETECT-FINISH] Lower message:', lowerMessage);
+    console.log('[VOICE-DETECT-FINISH] Result:', result);
+    return result;
+  };
 
   // Countdown state
   const [countdown, setCountdown] = useState<number | null>(3);
@@ -218,6 +294,18 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
   };
 
   const handleFinish = async () => {
+    console.log('[VOICE-HANDLE-FINISH] Starting handleFinish...');
+    console.log('[VOICE-HANDLE-FINISH] User ID:', user?.id);
+    console.log('[VOICE-HANDLE-FINISH] Messages count:', messages.length);
+    console.log('[VOICE-HANDLE-FINISH] isSessionFinished:', isSessionFinished.current);
+    console.log('[VOICE-HANDLE-FINISH] finishing state:', finishing);
+    
+    // Prevent duplicate calls
+    if (isSessionFinished.current || finishing) {
+      console.log('[VOICE-HANDLE-FINISH] Already finishing, skipping duplicate call');
+      return;
+    }
+    
     // Mark session as finished to prevent any further processing
     isSessionFinished.current = true;
 
@@ -229,21 +317,30 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
     setError(null);
 
     try {
-      if (!user?.id || messages.length <= 1) {
+      // Get current messages from ref (always has latest value)
+      const currentMessages = messagesRef.current;
+
+      if (!user?.id || currentMessages.length <= 1) {
+        console.error('[VOICE-HANDLE-FINISH] Validation failed - insufficient data');
+        console.error('[VOICE-HANDLE-FINISH] Messages length:', currentMessages.length);
         throw new Error('Unable to save session. Please try again.');
       }
 
+      console.log('[VOICE-HANDLE-FINISH] Calling completeSession with', currentMessages.length, 'messages');
       const sessionId = await roleplaySessionService.completeSession(
         user.id,
         scenario,
-        messages,
+        currentMessages,
         userPreferences
       );
 
+      console.log('[VOICE-HANDLE-FINISH] Session completed, ID:', sessionId);
+      console.log('[VOICE-HANDLE-FINISH] Redirecting to summary page...');
       // Keep loading screen visible during navigation
       router.replace(`/roleplay/summary/${sessionId}`);
       // Don't set finishing to false - let the navigation happen with loading screen visible
     } catch (error: any) {
+      console.error('[VOICE-HANDLE-FINISH] Error:', error);
       setError(error?.message || 'Error saving session. Please try again.');
       // Reset the flag if there's an error so user can try again
       isSessionFinished.current = false;

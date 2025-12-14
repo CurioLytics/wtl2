@@ -7,6 +7,7 @@ import { DailyGoalStatus } from '@/types/analytics';
 import { cn } from '@/utils/ui';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import Link from 'next/link';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface DailyGoalCardProps {
   data: DailyGoalStatus | null;
@@ -45,7 +46,7 @@ export function DailyGoalCard({ data, isLoading }: DailyGoalCardProps) {
     return (
       <Card className="p-6 bg-white shadow rounded-2xl">
         <div className="h-64 flex items-center justify-center">
-          <div className="text-muted-foreground">Đang tải mục tiêu...</div>
+          <LoadingSpinner text="Đang tải mục tiêu..." />
         </div>
       </Card>
     );

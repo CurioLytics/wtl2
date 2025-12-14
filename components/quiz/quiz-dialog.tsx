@@ -7,6 +7,7 @@ import { QuizQuestion, QuizState } from '@/types/quiz';
 import { Check, X, ExternalLink, Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { FeedbackLoadingScreen } from '@/components/roleplay/feedback-loading-screen';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface QuizDialogProps {
     isOpen: boolean;
@@ -104,41 +105,41 @@ export function QuizDialog({ isOpen, onClose, questions, topicName, sources, onR
         if (isLastQuestion) {
             // Quiz completed - show fireworks and completion screen
             setShowCompletion(true);
-            
+
             // Trigger fireworks effect
             const count = 200;
             const defaults = {
                 origin: { y: 0.7 }
             };
-            
+
             function fire(particleRatio: number, opts: any) {
                 confetti(Object.assign({}, defaults, opts, {
                     particleCount: Math.floor(count * particleRatio)
                 }));
             }
-            
+
             fire(0.25, {
                 spread: 26,
                 startVelocity: 55,
             });
-            
+
             fire(0.2, {
                 spread: 60,
             });
-            
+
             fire(0.35, {
                 spread: 100,
                 decay: 0.91,
                 scalar: 0.8
             });
-            
+
             fire(0.1, {
                 spread: 120,
                 startVelocity: 25,
                 decay: 0.92,
                 scalar: 1.2
             });
-            
+
             fire(0.1, {
                 spread: 120,
                 startVelocity: 45,
@@ -195,19 +196,10 @@ export function QuizDialog({ isOpen, onClose, questions, topicName, sources, onR
                 {isLoading ? (
                     /* Loading Screen */
                     <div className="py-12 flex justify-center">
-                        <div className="text-center space-y-4">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-                            <div className="h-6 flex items-center justify-center">
-                                {loadingSteps && loadingSteps[loadingStep] && (
-                                    <div 
-                                        key={loadingStep}
-                                        className="text-sm text-purple-600 font-medium animate-pulse transition-all duration-1500 ease-in-out"
-                                    >
-                                        {loadingSteps[loadingStep]}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        <LoadingSpinner
+                            size="lg"
+                            text={loadingSteps && loadingSteps[loadingStep] ? loadingSteps[loadingStep] : undefined}
+                        />
                     </div>
                 ) : showCompletion ? (
                     /* Completion Screen */
@@ -215,7 +207,7 @@ export function QuizDialog({ isOpen, onClose, questions, topicName, sources, onR
                         <div className="flex justify-center">
                             <Trophy className="w-16 h-16 text-yellow-500" />
                         </div>
-                        
+
                         <div>
                             <h3 className="text-2xl font-bold text-green-600 mb-2">Hoàn thành!</h3>
                             <p className="text-lg text-muted-foreground">
@@ -283,7 +275,7 @@ export function QuizDialog({ isOpen, onClose, questions, topicName, sources, onR
                                 </div>
                             </div>
                         )}
-                        
+
                         <div className="flex gap-3">
                             {onRetry && (
                                 <Button onClick={onRetry} size="lg" className="flex-1">
@@ -304,10 +296,10 @@ export function QuizDialog({ isOpen, onClose, questions, topicName, sources, onR
                                 <div
                                     key={index}
                                     className={`h-2 flex-1 rounded-full transition-all ${index < quizState.currentQuestionIndex
-                                            ? 'bg-green-500'
-                                            : index === quizState.currentQuestionIndex
-                                                ? 'bg-blue-500'
-                                                : 'bg-gray-200'
+                                        ? 'bg-green-500'
+                                        : index === quizState.currentQuestionIndex
+                                            ? 'bg-blue-500'
+                                            : 'bg-gray-200'
                                         }`}
                                 />
                             ))}

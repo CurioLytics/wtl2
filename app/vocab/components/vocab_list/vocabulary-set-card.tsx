@@ -5,7 +5,7 @@ import { Star, MoreVertical, Trash2 } from 'lucide-react';
 import { FlashcardSetStats } from '@/types/flashcardSetStats';
 import { toast } from 'sonner';
 import { toggleVocabularySetStar } from '@/utils/star-helpers';
-import { vocabularyService } from '@/services/vocabulary-service';
+import { vocabularyService } from '@/services/vocabulary/vocabulary-service';
 import { useAuth } from '@/hooks/auth/use-auth';
 
 interface VocabularySetCardProps {

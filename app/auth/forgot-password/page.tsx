@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { sendPasswordResetEmail } from '@/services/auth-service';
+import { sendPasswordResetEmail } from '@/services/auth/auth-service';
 import { LogoImage } from '@/components/auth/logo-image';
 
 export default function ForgotPasswordPage() {

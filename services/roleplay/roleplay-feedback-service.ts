@@ -16,6 +16,9 @@ class RoleplayFeedbackService {
     userPreferences?: { name?: string; english_level?: string; style?: string } | null
   ): Promise<RoleplayFeedback> {
     try {
+      console.log('[FEEDBACK-SERVICE] Starting generateFeedback...');
+      console.log('[FEEDBACK-SERVICE] Messages count:', messages.length);
+      
       // Safe defaults if preferences are not provided
       const safePreferences = {
         name: userPreferences?.name || 'User',
@@ -43,6 +46,7 @@ class RoleplayFeedbackService {
         }))
       };
 
+      console.log('[FEEDBACK-SERVICE] Calling /api/roleplay/feedback...');
       // Call our internal API route instead of the external webhook directly
       // This avoids exposing the webhook URL and handles the server-side env var access
       const response = await fetch('/api/roleplay/feedback', {
@@ -51,11 +55,15 @@ class RoleplayFeedbackService {
         body: JSON.stringify(payload)
       });
 
+      console.log('[FEEDBACK-SERVICE] Response status:', response.status);
+      
       if (!response.ok) {
+        console.error('[FEEDBACK-SERVICE] Webhook returned error:', response.status);
         throw new Error(`Webhook returned ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('[FEEDBACK-SERVICE] Feedback data received successfully');
 
       // Flexible parsing - handle both old and new webhook formats
       const findFeedback = (obj: any): RoleplayFeedback | null => {

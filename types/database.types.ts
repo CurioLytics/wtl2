@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_goal_completions: {
+        Row: {
+          all_goals_met: boolean
+          completion_date: string
+          created_at: string | null
+          id: string
+          journal_count: number
+          profile_id: string
+          roleplay_count: number
+          vocab_count: number
+        }
+        Insert: {
+          all_goals_met: boolean
+          completion_date: string
+          created_at?: string | null
+          id?: string
+          journal_count?: number
+          profile_id: string
+          roleplay_count?: number
+          vocab_count?: number
+        }
+        Update: {
+          all_goals_met?: boolean
+          completion_date?: string
+          created_at?: string | null
+          id?: string
+          journal_count?: number
+          profile_id?: string
+          roleplay_count?: number
+          vocab_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_goal_completions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback_grammar_items: {
         Row: {
           created_at: string | null
@@ -61,39 +102,33 @@ export type Database = {
           clarity_feedback: string | null
           created_at: string | null
           enhanced_version: string | null
-          fixed_typo: string | null
           id: string
           ideas_feedback: string | null
           profile_id: string
           source_id: string
           source_type: Database["public"]["Enums"]["feedback_source_type"]
-          summary: string | null
           vocabulary_feedback: string | null
         }
         Insert: {
           clarity_feedback?: string | null
           created_at?: string | null
           enhanced_version?: string | null
-          fixed_typo?: string | null
           id?: string
           ideas_feedback?: string | null
           profile_id: string
           source_id: string
           source_type: Database["public"]["Enums"]["feedback_source_type"]
-          summary?: string | null
           vocabulary_feedback?: string | null
         }
         Update: {
           clarity_feedback?: string | null
           created_at?: string | null
           enhanced_version?: string | null
-          fixed_typo?: string | null
           id?: string
           ideas_feedback?: string | null
           profile_id?: string
           source_id?: string
           source_type?: Database["public"]["Enums"]["feedback_source_type"]
-          summary?: string | null
           vocabulary_feedback?: string | null
         }
         Relationships: [
@@ -129,6 +164,7 @@ export type Database = {
           category: string
           content: string
           cover_image: string | null
+          created_at: string | null
           description: string | null
           is_default: boolean | null
           is_pinned: boolean | null
@@ -140,6 +176,7 @@ export type Database = {
           category: string
           content: string
           cover_image?: string | null
+          created_at?: string | null
           description?: string | null
           is_default?: boolean | null
           is_pinned?: boolean | null
@@ -151,6 +188,7 @@ export type Database = {
           category?: string
           content?: string
           cover_image?: string | null
+          created_at?: string | null
           description?: string | null
           is_default?: boolean | null
           is_pinned?: boolean | null
@@ -560,6 +598,50 @@ export type Database = {
           },
         ]
       }
+      user_feedbacks: {
+        Row: {
+          category: string
+          created_at: string
+          email: string | null
+          id: string
+          images: Json | null
+          message: string
+          name: string
+          profile_id: string | null
+          submitted_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          images?: Json | null
+          message: string
+          name?: string
+          profile_id?: string | null
+          submitted_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          images?: Json | null
+          message?: string
+          name?: string
+          profile_id?: string | null
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feedbacks_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_streaks: {
         Row: {
           current_streak: number | null
@@ -693,7 +775,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "flashcard_set_profile_id_fkey"
+            foreignKeyName: "vocabulary_set_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -786,6 +868,19 @@ export type Database = {
       }
     }
     Functions: {
+      get_events_by_date: {
+        Args: { p_date: string; p_profile_id: string }
+        Returns: {
+          event_type: string
+        }[]
+      }
+      get_events_by_date_range: {
+        Args: { p_end_date: string; p_profile_id: string; p_start_date: string }
+        Returns: {
+          event_date: string
+          event_type: string
+        }[]
+      }
       get_flashcard_set_stats: {
         Args: { user_uuid: string }
         Returns: {
@@ -920,6 +1015,14 @@ export type Database = {
           user_uuid: string
         }
         Returns: undefined
+      }
+      update_user_streak: {
+        Args: { p_profile_id: string; p_today?: string }
+        Returns: {
+          current_streak: number
+          goals_met: boolean
+          longest_streak: number
+        }[]
       }
       update_vocabulary_review: {
         Args: {

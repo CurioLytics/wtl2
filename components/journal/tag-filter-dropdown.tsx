@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { journalService } from '@/services/journal-service';
+import { journalService } from '@/services/journal/journal-service';
 import { ChevronDown } from 'lucide-react';
 
 interface TagFilterDropdownProps {

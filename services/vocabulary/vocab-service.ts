@@ -14,32 +14,32 @@ class VocabService {
   async getVocabCollections(userId: string): Promise<VocabCollection[]> {
     try {
       const supabase = createSupabaseClient();
-      
-      // Call the get_vocab_collections Supabase function
+
+      // Call the vocabulary_set table as replacement for vocab_collections
       const { data, error } = await supabase
-        .from('vocab_collections')
+        .from('vocabulary_set')
         .select('*')
-        .eq('user_id', userId);
-      
+        .eq('profile_id', userId);
+
       if (error) {
         console.error('Error fetching vocabulary collections:', error);
         throw error;
       }
-      
+
       if (!data || !Array.isArray(data)) {
         console.warn('Invalid data structure returned for vocabulary collections');
         return [];
       }
-      
-      return data.map(collection => ({
+
+      return (data as any[]).map(collection => ({
         id: collection.id,
         title: collection.title,
-        description: collection.description,
-        type: collection.type,
-        wordsCount: collection.words_count || 0,
-        masteredCount: collection.mastered_count || 0,
-        userId: collection.user_id,
-        createdAt: new Date(collection.created_at)
+        description: collection.description || '',
+        type: 'theme', // Default type as vocabulary_set doesn't have type
+        wordsCount: 0, // Default as vocabulary_set doesn't have count
+        masteredCount: 0, // Default as vocabulary_set doesn't have count
+        userId: collection.profile_id,
+        createdAt: new Date(collection.created_at || Date.now())
       }));
     } catch (error) {
       console.error('Error in getVocabCollections:', error);

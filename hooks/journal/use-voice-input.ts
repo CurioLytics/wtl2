@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { voiceService } from '@/services/voice-service';
+import { voiceService } from '@/services/media/voice-service';
 
 const AUTO_INSERT_DELAY_MS = 2000; // 5 seconds of silence before auto-insert
 

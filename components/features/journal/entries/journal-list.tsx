@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MoreVertical, Trash2 } from 'lucide-react';
 import { Journal } from '@/types/journal';
 import { formatDate } from '@/utils/date-utils';
-import { journalService } from '@/services/journal-service';
+import { journalService } from '@/services/journal/journal-service';
 
 interface JournalListProps {
   journals: Journal[];
@@ -31,7 +31,7 @@ export function JournalList({ journals, onSelect, selectedJournalId, onDelete }:
 
   const handleDelete = async (journalId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (!window.confirm('Bạn có chắc chắn muốn xóa bài nhật ký này?')) {
       return;
     }
@@ -60,19 +60,18 @@ export function JournalList({ journals, onSelect, selectedJournalId, onDelete }:
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-4">
       {journals.map(journal => (
         <div
           key={journal.id}
-          className={`relative p-4 rounded-lg border-2 transition-all duration-200 ${
-            selectedJournalId === journal.id
+          className={`relative p-4 rounded-lg border-2 transition-all duration-200 ${selectedJournalId === journal.id
               ? 'bg-blue-50 border-[var(--accent-blue)] shadow-sm'
               : 'bg-white border-gray-200 hover:border-[var(--accent-blue)] hover:bg-blue-50/30'
-          } ${deletingId === journal.id ? 'opacity-50 pointer-events-none' : ''}`}
+            } ${deletingId === journal.id ? 'opacity-50 pointer-events-none' : ''}`}
         >
-          <div 
+          <div
             onClick={() => onSelect(journal)}
             className="cursor-pointer"
             role="button"

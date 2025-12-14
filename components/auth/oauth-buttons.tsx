@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { signInWithProvider } from '@/services/auth-service';
+import { signInWithProvider } from '@/services/auth/auth-service';
 import { useSearchParams } from 'next/navigation';
 
 export function OAuthButtons() {

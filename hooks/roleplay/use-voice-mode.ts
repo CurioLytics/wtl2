@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { voiceService } from '@/services/voice-service';
-import { ttsService } from '@/services/tts-service';
+import { voiceService } from '@/services/media/voice-service';
+import { ttsService } from '@/services/media/tts-service';
 
 type VoiceState = 'idle' | 'bot-speaking' | 'listening' | 'user-speaking' | 'thinking';
 

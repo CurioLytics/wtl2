@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { authenticateUser, parseRequestBody, createSuccessResponse, handleApiError } from '@/utils/api-helpers';
-import { saveOnboardingData } from '@/services/onboarding-service';
+import { saveOnboardingData } from '@/services/onboarding/onboarding-service';
 import type { OnboardingData } from '@/types/onboarding';
 
 export async function POST(request: NextRequest) {

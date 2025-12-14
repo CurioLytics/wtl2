@@ -1,6 +1,6 @@
 import { createClient } from '@/services/supabase/server';
 import { NextResponse } from 'next/server';
-import { analyticsService } from '@/services/analytics-service';
+import { analyticsService } from '@/services/analytics/analytics-service';
 
 export async function POST(request: Request) {
     try {

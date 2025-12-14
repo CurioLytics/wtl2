@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { User } from '@supabase/supabase-js';
-import { resendVerificationEmail } from '@/services/auth-service';
+import { resendVerificationEmail } from '@/services/auth/auth-service';
 
 // ResendButton component for email verification
 function ResendButton({ email }: { email: string | undefined }) {

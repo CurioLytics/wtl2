@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen, Plus } from 'lucide-react';
-import { frameworkService, Framework, FrameworkCategory } from '@/services/framework-service';
+import { frameworkService, Framework, FrameworkCategory } from '@/services/journal/framework-service';
 import { FrameworkDialog } from '@/components/journal/framework-dialog';
 
 export function ExploreFrameworks() {

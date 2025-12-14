@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { journalService } from '@/services/journal-service';
+import { journalService } from '@/services/journal/journal-service';
 
 interface TagFilterProps {
   onFilterChange: (tag: string | null) => void;
@@ -12,7 +12,7 @@ interface TagFilterProps {
 export function TagFilter({ onFilterChange, currentTag }: TagFilterProps) {
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const router = useRouter();
-  
+
   useEffect(() => {
     async function fetchTags() {
       try {
@@ -22,12 +22,12 @@ export function TagFilter({ onFilterChange, currentTag }: TagFilterProps) {
         console.error('Error fetching journal tags:', error);
       }
     }
-    
+
     fetchTags();
   }, []);
-  
+
   if (availableTags.length === 0) return null;
-  
+
   return (
     <div className="mb-6 bg-white rounded-2xl p-4 shadow">
       <div className="flex items-center justify-between mb-3">
@@ -41,7 +41,7 @@ export function TagFilter({ onFilterChange, currentTag }: TagFilterProps) {
           </button>
         )}
       </div>
-      
+
       <div className="flex flex-wrap gap-2">
         {availableTags.map(tag => (
           <button

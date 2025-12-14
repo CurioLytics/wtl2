@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { ttsService } from '@/services/tts-service';
+import { ttsService } from '@/services/media/tts-service';
 
 export function useTTS() {
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);

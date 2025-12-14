@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authenticateUser, handleApiError, parseRequestBody, createSuccessResponse } from '@/utils/api-helpers';
-import { journalService } from '@/services/journal-service';
+import { journalService } from '@/services/journal/journal-service';
 
 /**
  * POST /api/journal
@@ -9,22 +9,22 @@ import { journalService } from '@/services/journal-service';
 export async function POST(request: Request) {
   try {
     const user = await authenticateUser();
-    
+
     const { title, content, templateId, entryDate } = await parseRequestBody<{
       title?: string;
       content: string;
       templateId?: string;
       entryDate?: string;
     }>(request);
-    
+
     if (!content) {
       throw new Error('Content is required');
     }
-    
+
     // Validate date format if provided
     let parsedDate: string;
     try {
-      parsedDate = entryDate 
+      parsedDate = entryDate
         ? new Date(entryDate).toISOString()
         : new Date().toISOString();
     } catch {

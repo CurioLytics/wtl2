@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Framework, frameworkService } from '@/services/framework-service';
+import { Framework, frameworkService } from '@/services/journal/framework-service';
 import { Badge } from '@/components/ui/badge';
 import { Pin } from 'lucide-react';
 import { cn } from '@/utils/ui';

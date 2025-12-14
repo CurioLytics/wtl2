@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/auth/use-auth';
-import { journalService } from '@/services/journal-service';
+import { journalService } from '@/services/journal/journal-service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,7 +14,7 @@ import { ErrorState } from '@/components/ui/common/state-components';
 import { HighlightSelector } from '@/components/features/journal/editor/highlight-selector';
 import { HighlightList } from '@/components/features/journal/editor/highlight-list';
 import { feedbackLogsService } from '@/services/supabase/feedback-logs-service';
-import { flashcardGenerationService } from '@/services/flashcard-generation-service';
+import { flashcardGenerationService } from '@/services/vocabulary/flashcard-generation-service';
 import { GrammarDetail } from '@/types/journal-feedback';
 import { FeedbackLoadingScreen } from '@/components/roleplay/feedback-loading-screen';
 import { SectionNavigation } from '@/components/ui/section-navigation';
@@ -49,7 +49,7 @@ function useJournalFeedbackDB(userId?: string) {
           const journal = await journalService.getJournalById(jId);
 
           // Import the feedback service
-          const { journalFeedbackService } = await import('@/services/journal-feedback-service');
+          const { journalFeedbackService } = await import('@/services/journal/journal-feedback-service');
           const { feedbackLogsService } = await import('@/services/supabase/feedback-logs-service');
 
           // Make API call

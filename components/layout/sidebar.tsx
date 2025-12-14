@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/auth/use-auth';
-import { signOut } from '@/services/auth-service';
+import { signOut } from '@/services/auth/auth-service';
 import { useResponsive } from '@/hooks/common/use-responsive';
 import { zIndex } from '@/utils/z-index';
 import { cn } from '@/utils/ui';

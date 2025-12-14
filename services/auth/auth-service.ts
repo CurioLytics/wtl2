@@ -1,6 +1,6 @@
 import { type Provider } from '@supabase/supabase-js';
 // Use only one Supabase client instance to avoid auth conflicts
-import { supabase } from './supabase/client';
+import { supabase } from '../supabase/client';
 import { type Database } from '@/types/database.types';
 
 export type AuthError = {
@@ -48,17 +48,17 @@ export async function signInWithProvider(provider: Provider) {
     // Clear any cached user data before starting new auth flow
     cachedUser = null;
     cachedUserTimestamp = 0;
-    
+
     // Track the login attempt in localStorage for persistence through redirects
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_in_progress', provider);
-      
+
       // Clear all app caches on new login
       const { cacheManager } = await import('@/lib/cache');
       cacheManager.clearAll('local');
       cacheManager.clearAll('session');
     }
-    
+
     // Include queryParams to pass additional info (useful for redirects after auth)
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -92,33 +92,33 @@ export async function signInWithProvider(provider: Provider) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_in_progress');
     }
-    return { 
-      error: { 
-        message: `Failed to connect to ${provider}. Please check your internet connection and try again.` 
-      } as AuthError 
+    return {
+      error: {
+        message: `Failed to connect to ${provider}. Please check your internet connection and try again.`
+      } as AuthError
     };
   }
 }
 
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
-  
+
   // Clear cached user
   cachedUser = null;
   cachedUserTimestamp = 0;
-  
+
   // Clear any stored user data from localStorage/sessionStorage
   if (typeof window !== 'undefined') {
     // Clear all app caches
     const { cacheManager } = await import('@/lib/cache');
     cacheManager.clearAll('local');
     cacheManager.clearAll('session');
-    
+
     // We'll rely on the provider's useEffect to clear the profile state
     // This is just a safety measure for any other stored auth data
     sessionStorage.removeItem('user-profile-storage');
   }
-  
+
   if (error) {
     return { error: { message: error.message } as AuthError };
   }

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { updatePassword } from '@/services/auth-service';
+import { updatePassword } from '@/services/auth/auth-service';
 import { LogoImage } from '@/components/auth/logo-image';
 import { createClient } from '@/services/supabase/client';
 

@@ -1,6 +1,6 @@
 import { createSupabaseClient } from '@/services/supabase/auth-helpers';
 import { JournalTemplate } from '@/types/journal';
-import { SUPABASE_CONFIG } from '@/config/supabase';
+
 
 /**
  * Service for fetching and managing journal templates
@@ -15,9 +15,10 @@ class JournalTemplateService {
     try {
       const supabase = createSupabaseClient();
 
+      // Query frameworks table for user's custom frameworks
       const { data, error } = await supabase
-        .from(SUPABASE_CONFIG.tables.templates)
-        .select('profile_id, name, content, cover_image')
+        .from('frameworks')
+        .select('profile_id, name, content, cover_image, category, description, is_pinned')
         .eq('profile_id', userId)
         .order('name');
 
@@ -26,7 +27,16 @@ class JournalTemplateService {
         throw error;
       }
 
-      return data || [];
+      return (data || []).map(f => ({
+        id: f.name, // using name as ID since frameworks lacks ID
+        name: f.name,
+        profile_id: f.profile_id || undefined,
+        content: f.content,
+        cover_image: f.cover_image,
+        category: f.category,
+        description: f.description,
+        is_pinned: f.is_pinned
+      }));
     } catch (error) {
       console.error('Error in getTemplatesByUserId:', error);
       throw error;
@@ -44,8 +54,8 @@ class JournalTemplateService {
       const supabase = createSupabaseClient();
 
       const { data, error } = await supabase
-        .from(SUPABASE_CONFIG.tables.templates)
-        .select('profile_id, name, content, cover_image')
+        .from('frameworks')
+        .select('profile_id, name, content, cover_image, category, description, is_pinned')
         .eq('profile_id', userId)
         .eq('name', decodeURIComponent(templateName))
         .single();
@@ -58,7 +68,16 @@ class JournalTemplateService {
         throw error;
       }
 
-      return data;
+      return {
+        id: data.name,
+        name: data.name,
+        profile_id: data.profile_id || undefined,
+        content: data.content,
+        cover_image: data.cover_image,
+        category: data.category,
+        description: data.description,
+        is_pinned: data.is_pinned
+      };
     } catch (error) {
       console.error('Error in getTemplateByName:', error);
       throw error;
@@ -73,9 +92,11 @@ class JournalTemplateService {
     try {
       const supabase = createSupabaseClient();
 
+      // Assuming default templates identify by is_default=true OR specific categories if is_default missing
+      // Based on schema, frameworks has is_default.
       const { data, error } = await supabase
-        .from(SUPABASE_CONFIG.tables.templates)
-        .select('id, name, content, category, is_default')
+        .from('frameworks')
+        .select('name, content, category, is_default, description, cover_image')
         .eq('is_default', true)
         .order('name');
 
@@ -84,18 +105,16 @@ class JournalTemplateService {
         throw error;
       }
 
-      // Transform to match JournalTemplate interface
-      const defaultTemplates: JournalTemplate[] = (data || []).map(template => ({
-        profile_id: '', // Default templates don't belong to specific users
+      return (data || []).map(template => ({
+        profile_id: '',
         name: template.name,
         content: template.content || '',
-        cover_image: null, // Frameworks might have cover_image, but we'll stick to interface for now or map it if available
-        id: template.id, // Frameworks might not have ID exposed or it's UUID. Interface expects string?
+        cover_image: template.cover_image,
+        id: template.name,
         category: template.category,
-        // tag and other are removed from frameworks
+        description: template.description,
+        is_default: template.is_default
       }));
-
-      return defaultTemplates;
     } catch (error) {
       console.error('Error in getDefaultTemplates:', error);
       throw error;
@@ -111,8 +130,8 @@ class JournalTemplateService {
       const supabase = createSupabaseClient();
 
       const { data, error } = await supabase
-        .from(SUPABASE_CONFIG.tables.templates)
-        .select('profile_id, name, content, cover_image')
+        .from('frameworks')
+        .select('profile_id, name, content, cover_image, category, description, is_pinned')
         .order('name');
 
       if (error) {
@@ -120,7 +139,16 @@ class JournalTemplateService {
         throw error;
       }
 
-      return data || [];
+      return (data || []).map(f => ({
+        id: f.name,
+        name: f.name,
+        profile_id: f.profile_id || undefined,
+        content: f.content,
+        cover_image: f.cover_image,
+        category: f.category,
+        description: f.description,
+        is_pinned: f.is_pinned
+      }));
     } catch (error) {
       console.error('Error in getAllTemplates:', error);
       throw error;

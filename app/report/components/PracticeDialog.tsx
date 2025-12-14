@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { exerciseService } from '@/services/exercise-service-new';
+import { exerciseService } from '@/services/exercises/exercise-service';
 import { ErrorData, TopicExercise, GradingV2Response } from '@/types/exercise';
 import { ExerciseResults } from './ExerciseResults';
 

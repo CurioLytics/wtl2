@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/auth/use-auth';
-import { journalService } from '@/services/journal-service';
-import { journalFeedbackService } from '@/services/journal-feedback-service';
+import { journalService } from '@/services/journal/journal-service';
+import { journalFeedbackService } from '@/services/journal/journal-feedback-service';
 import { feedbackLogsService } from '@/services/supabase/feedback-logs-service';
 import { formatDateInput } from '@/utils/date-utils';
 import { useJournalForm } from './use-journal-form';

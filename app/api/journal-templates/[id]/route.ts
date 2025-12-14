@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authenticateUser, handleApiError } from '@/utils/api-helpers';
-import { journalTemplateService } from '@/services/journal-template-service';
+import { journalTemplateService } from '@/services/journal/journal-template-service';
 
 export async function GET(
   request: Request,

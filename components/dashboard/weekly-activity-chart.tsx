@@ -8,6 +8,7 @@ import { WeeklyActivityData } from '@/types/analytics';
 interface WeeklyActivityChartProps {
   data: WeeklyActivityData[];
   isLoading?: boolean;
+  action?: React.ReactNode;
 }
 
 const ACTIVITY_COLORS = {
@@ -24,7 +25,7 @@ const ACTIVITY_LABELS = {
   roleplay_completed: 'Roleplay Session',
 };
 
-export function WeeklyActivityChart({ data, isLoading }: WeeklyActivityChartProps) {
+export function WeeklyActivityChart({ data, isLoading, action }: WeeklyActivityChartProps) {
   if (isLoading) {
     return (
       <Card className="p-6 bg-white shadow rounded-2xl">
@@ -55,67 +56,72 @@ export function WeeklyActivityChart({ data, isLoading }: WeeklyActivityChartProp
   }));
 
   return (
-    <Card className="p-6 bg-white shadow rounded-2xl">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold">Weekly Activity</h3>
-        <p className="text-sm text-muted-foreground">Your learning activities over time</p>
+    <Card className="p-6 bg-white shadow rounded-2xl h-full flex flex-col">
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-semibold">Weekly Activity</h3>
+          <p className="text-sm text-muted-foreground">Your learning activities over time</p>
+        </div>
+        {action && <div>{action}</div>}
       </div>
 
-      <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={formattedData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-          <XAxis
-            dataKey="dateLabel"
-            className="text-xs"
-            tick={{ fill: 'hsl(var(--muted-foreground))' }}
-          />
-          <YAxis
-            className="text-xs"
-            tick={{ fill: 'hsl(var(--muted-foreground))' }}
-            allowDecimals={false}
-          />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: 'hsl(var(--card))',
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '8px',
-            }}
-            labelStyle={{ color: 'hsl(var(--foreground))' }}
-          />
-          <Legend
-            wrapperStyle={{ paddingTop: '20px' }}
-            formatter={(value) => ACTIVITY_LABELS[value as keyof typeof ACTIVITY_LABELS] || value}
-          />
-          <Bar
-            dataKey="vocab_created"
-            stackId="a"
-            fill={ACTIVITY_COLORS.vocab_created}
-            name="vocab_created"
-            radius={[0, 0, 0, 0]}
-          />
-          <Bar
-            dataKey="vocab_reviewed"
-            stackId="a"
-            fill={ACTIVITY_COLORS.vocab_reviewed}
-            name="vocab_reviewed"
-            radius={[0, 0, 0, 0]}
-          />
-          <Bar
-            dataKey="journal_created"
-            stackId="a"
-            fill={ACTIVITY_COLORS.journal_created}
-            name="journal_created"
-            radius={[0, 0, 0, 0]}
-          />
-          <Bar
-            dataKey="roleplay_completed"
-            stackId="a"
-            fill={ACTIVITY_COLORS.roleplay_completed}
-            name="roleplay_completed"
-            radius={[4, 4, 0, 0]}
-          />
-        </BarChart>
-      </ResponsiveContainer>
+      <div className="flex-1 min-h-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={formattedData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <XAxis
+              dataKey="dateLabel"
+              className="text-xs"
+              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            />
+            <YAxis
+              className="text-xs"
+              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              allowDecimals={false}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '8px',
+              }}
+              labelStyle={{ color: 'hsl(var(--foreground))' }}
+            />
+            <Legend
+              wrapperStyle={{ paddingTop: '20px' }}
+              formatter={(value) => ACTIVITY_LABELS[value as keyof typeof ACTIVITY_LABELS] || value}
+            />
+            <Bar
+              dataKey="vocab_created"
+              stackId="a"
+              fill={ACTIVITY_COLORS.vocab_created}
+              name="vocab_created"
+              radius={[0, 0, 0, 0]}
+            />
+            <Bar
+              dataKey="vocab_reviewed"
+              stackId="a"
+              fill={ACTIVITY_COLORS.vocab_reviewed}
+              name="vocab_reviewed"
+              radius={[0, 0, 0, 0]}
+            />
+            <Bar
+              dataKey="journal_created"
+              stackId="a"
+              fill={ACTIVITY_COLORS.journal_created}
+              name="journal_created"
+              radius={[0, 0, 0, 0]}
+            />
+            <Bar
+              dataKey="roleplay_completed"
+              stackId="a"
+              fill={ACTIVITY_COLORS.roleplay_completed}
+              name="roleplay_completed"
+              radius={[4, 4, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </Card>
   );
 }

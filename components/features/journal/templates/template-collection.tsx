@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { JournalTemplate, JournalTemplateCategory, TEMPLATE_CATEGORIES } from '@/types/journal';
-import { journalTemplateService } from '@/services/journal-template-service';
+import { journalTemplateService } from '@/services/journal/journal-template-service';
 import { cn } from '@/utils/ui';
 import { CategorySection } from './category-section';
 import { LoadingState, ErrorState, EmptyState } from '@/components/ui/common/state-components';

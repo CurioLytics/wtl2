@@ -12,7 +12,7 @@ import { TagFilterDropdown } from '@/components/journal/tag-filter-dropdown';
 import { DateRangeFilter } from '@/components/journal/date-range-filter';
 import { WeekCalendarView } from '@/components/journal/week-calendar-view';
 import { Journal, JournalStats } from '@/types/journal';
-import { journalService } from '@/services/journal-service';
+import { journalService } from '@/services/journal/journal-service';
 import { useAuth } from '@/hooks/auth/use-auth';
 import { SectionNavigation } from '@/components/ui/section-navigation';
 import { PageContentWrapper } from '@/components/ui/page-content-wrapper';

@@ -170,8 +170,8 @@ export function ScenarioDetail({ scenario }: ScenarioDetailProps) {
               </p>
               <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside">
                 <li>Bạn có <strong>tối đa 12 giây</strong> để suy nghĩ</li>
-                <li>Mỗi lần nghỉ không quá <strong>2 giây</strong></li>
-                <li>AI sẽ tự động gửi tin nhắn nếu bạn im lặng quá lâu</li>
+                <li>Mỗi lần dừng không quá <strong>2 giây</strong></li>
+                <li> Khi muốn kết thúc hội thoại, nói "Finish the conversation" hoặc nhấn nút "Finish"</li>
               </ul>
             </div>
 

@@ -5,7 +5,7 @@ import { MoreHorizontal, Calendar, Tag, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatDateInput, parseDateInput } from '@/utils/date-utils';
-import { journalService } from '@/services/journal-service';
+import { journalService } from '@/services/journal/journal-service';
 
 interface JournalActionsMenuProps {
   journalId?: string;
@@ -30,7 +30,7 @@ export function JournalActionsMenu({
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [isLoadingTags, setIsLoadingTags] = useState(false);
-  
+
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Fetch available tags
@@ -166,7 +166,7 @@ export function JournalActionsMenu({
                   {showTagSelector ? 'Close' : 'Edit'}
                 </Button>
               </div>
-              
+
               {/* Current Tags */}
               {currentTags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
@@ -220,11 +220,10 @@ export function JournalActionsMenu({
                           <button
                             key={tag}
                             onClick={() => handleTagToggle(tag)}
-                            className={`text-xs px-2 py-1 rounded-full transition-colors ${
-                              currentTags.includes(tag)
+                            className={`text-xs px-2 py-1 rounded-full transition-colors ${currentTags.includes(tag)
                                 ? 'bg-blue-100 text-blue-800'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
+                              }`}
                           >
                             {tag}
                           </button>

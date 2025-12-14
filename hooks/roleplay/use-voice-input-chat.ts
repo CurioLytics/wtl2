@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { voiceService } from '@/services/voice-service';
+import { voiceService } from '@/services/media/voice-service';
 
 export function useVoiceInputChat(onTranscript: (text: string) => void) {
   const [isListening, setIsListening] = useState(false);

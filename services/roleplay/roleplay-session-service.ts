@@ -3,7 +3,7 @@ import { RoleplayMessage, RoleplayScenario, RoleplayFeedback, RoleplaySessionDat
 import { errorLog } from '@/utils/roleplay-utils';
 import { roleplayFeedbackService } from './roleplay-feedback-service';
 import { feedbackLogsService } from '@/services/supabase/feedback-logs-service';
-import { flashcardGenerationService } from '@/services/flashcard-generation-service';
+import { flashcardGenerationService } from '@/services/vocabulary/flashcard-generation-service';
 
 class RoleplaySessionService {
   /**
@@ -15,9 +15,15 @@ class RoleplaySessionService {
     messages: RoleplayMessage[],
     userPreferences?: { name?: string; english_level?: string; style?: string } | null
   ): Promise<string> {
+    console.log('[COMPLETE-SESSION] Starting completeSession...');
+    console.log('[COMPLETE-SESSION] User ID:', userId);
+    console.log('[COMPLETE-SESSION] Scenario ID:', scenario.id);
+    console.log('[COMPLETE-SESSION] Messages count:', messages.length);
+    
     const supabase = createClient();
 
     // Save session
+    console.log('[COMPLETE-SESSION] Saving session to database...');
     const { data, error } = await supabase
       .from('sessions')
       .insert({
@@ -28,26 +34,46 @@ class RoleplaySessionService {
       .select('session_id')
       .single();
 
-    if (error) throw new Error(`Failed to save session: ${error.message}`);
+    if (error) {
+      console.error('[COMPLETE-SESSION] Failed to save session:', error);
+      throw new Error(`Failed to save session: ${error.message}`);
+    }
 
     const sessionId = data.session_id;
+    console.log('[COMPLETE-SESSION] Session saved with ID:', sessionId);
 
     // Generate feedback
     try {
+      console.log('[COMPLETE-SESSION] Generating feedback...');
       const feedback = await roleplayFeedbackService.generateFeedback(scenario, messages, userPreferences);
+      console.log('[COMPLETE-SESSION] Feedback received:', feedback ? 'Yes' : 'No');
 
-      if (feedback && feedback.output?.clarity) {
+      // Check if feedback has valid content (new or old format)
+      const hasValidFeedback = feedback && (
+        feedback.enhanced_version || 
+        feedback.grammar_details?.length > 0 || 
+        feedback.output?.vocabulary ||
+        feedback.output?.clarity
+      );
+
+      if (hasValidFeedback) {
+        console.log('[COMPLETE-SESSION] Saving feedback to database...');
         // Save to sessions table (legacy format)
         await this.saveFeedback(sessionId, feedback);
 
         // Save to feedbacks and feedback_grammar_items tables
         await this.saveFeedbackToTables(userId, sessionId, feedback);
+        console.log('[COMPLETE-SESSION] Feedback saved successfully');
+      } else {
+        console.warn('[COMPLETE-SESSION] No valid feedback to save');
       }
     } catch (feedbackError) {
+      console.error('[COMPLETE-SESSION] Error generating feedback:', feedbackError);
       errorLog('completeSession', feedbackError);
     }
 
     // Track learning event
+    console.log('[COMPLETE-SESSION] Tracking analytics event...');
     fetch('/api/analytics/event', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -60,6 +86,7 @@ class RoleplaySessionService {
       })
     }).catch(err => console.error('Error tracking roleplay event:', err));
 
+    console.log('[COMPLETE-SESSION] Completed successfully');
     return sessionId;
   }
 
@@ -165,7 +192,7 @@ class RoleplaySessionService {
       scenario_name: (data.roleplays as any)?.name || 'Unknown Scenario',
       scenario: (data.roleplays as any) || { name: '', context: '', ai_role: '' },
       feedback: parsedFeedback,
-      messages: data.conversation_json?.messages || [],
+      messages: (data.conversation_json as any)?.messages || [],
       highlights: data.highlights || [],
       created_at: data.created_at || new Date().toISOString()
     };
@@ -204,7 +231,7 @@ class RoleplaySessionService {
       scenario_name: (session.roleplays as any)?.name || 'Unknown Scenario',
       scenario: session.roleplays as any,
       feedback: typeof session.feedback === 'string' ? JSON.parse(session.feedback) : session.feedback,
-      messages: session.conversation_json?.messages || [],
+      messages: (session.conversation_json as any)?.messages || [],
       highlights: session.highlights || [],
       created_at: session.created_at,
       pinned: session.pinned || false
@@ -214,8 +241,33 @@ class RoleplaySessionService {
   /**
    * Save highlights and generate vocabulary
    */
-  async saveHighlightsAndGenerateFlashcards(sessionId: string, highlights: string[], sessionData: any, userId: string) {
+  async saveHighlightsAndGenerateFlashcards(
+    sessionId: string,
+    highlights: string[],
+    sessionData: any,
+    userId: string,
+    selectedGrammarIndices?: number[]
+  ) {
     const supabase = createClient();
+
+    // Filter grammar_details based on selected indices
+    let updatedFeedback = sessionData.feedback;
+    if (selectedGrammarIndices !== undefined && sessionData.feedback?.grammar_details) {
+      const filteredGrammar = sessionData.feedback.grammar_details.filter(
+        (_: any, index: number) => selectedGrammarIndices.includes(index)
+      );
+      
+      updatedFeedback = {
+        ...sessionData.feedback,
+        grammar_details: filteredGrammar
+      };
+
+      // Update feedback in database with filtered grammar
+      await supabase
+        .from('sessions')
+        .update({ feedback: JSON.stringify(updatedFeedback) })
+        .eq('session_id', sessionId);
+    }
 
     // Save highlights
     const { error } = await supabase
@@ -225,11 +277,25 @@ class RoleplaySessionService {
 
     if (error) throw new Error(`Failed to save highlights: ${error.message}`);
 
-    // Generate flashcards using shared service
+    // Fetch user profile for flashcard generation
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name, english_level, style')
+      .eq('id', userId)
+      .single();
+
+    const user = {
+      id: userId,
+      name: profile?.name || 'User',
+      english_level: profile?.english_level || 'Intermediate',
+      style: profile?.style || 'Casual'
+    };
+
+    // Generate flashcards using shared service with filtered feedback
     const result = await flashcardGenerationService.generateFromRoleplay(
-      userId,
+      user,
       sessionData.scenario_name,
-      sessionData.feedback,
+      updatedFeedback,
       highlights
     );
 

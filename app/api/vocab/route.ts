@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authenticateUser, handleApiError, createSuccessResponse } from '@/utils/api-helpers';
-import { vocabService } from '@/services/vocab-service';
+import { vocabService } from '@/services/vocabulary/vocab-service';
 
 /**
  * GET /api/vocab

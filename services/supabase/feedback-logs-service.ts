@@ -176,29 +176,7 @@ export class FeedbackLogsService {
     return feedbackId;
   }
 
-  /**
-   * Legacy method - kept for backward compatibility
-   * @deprecated Use saveFeedback instead
-   */
-  async saveFeedbackLogs(userId: string, grammarDetails: GrammarDetail[]): Promise<void> {
-    if (!grammarDetails || grammarDetails.length === 0) return;
 
-    const feedbackItems = grammarDetails.map(detail => ({
-      profile_id: userId,
-      grammar_id: detail.grammar_topic_id,
-      details: detail.description,
-      type: 'grammar',
-    }));
-
-    const { error } = await supabase
-      .from('feedback_logs')
-      .insert(feedbackItems as any);
-
-    if (error) {
-      console.error('Error saving feedback logs:', error);
-      throw new Error(`Failed to save feedback logs: ${error.message}`);
-    }
-  }
 }
 
 export const feedbackLogsService = new FeedbackLogsService();

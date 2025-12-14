@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/auth/use-auth';
 import { useResponsive } from '@/hooks/common/use-responsive';
-import { signOut } from '@/services/auth-service';
+import { signOut } from '@/services/auth/auth-service';
 import {
   Sheet,
   SheetContent,

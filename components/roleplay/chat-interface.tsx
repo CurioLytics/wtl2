@@ -62,6 +62,15 @@ export function ChatInterface({ scenario }: ChatInterfaceProps) {
   const [error, setError] = useState<string | null>(null);
 
   const endRef = useRef<HTMLDivElement>(null);
+  const autoFinishScheduled = useRef(false);
+  const messagesRef = useRef<RoleplayMessage[]>([]);
+
+  const addMessage = (msg: RoleplayMessage) =>
+    setMessages((prev) => {
+      const updated = [...prev, msg];
+      messagesRef.current = updated;
+      return updated;
+    });
 
   const hasUserMessages = messages.filter(msg => msg.sender === 'user').length > 0;
 
@@ -106,15 +115,37 @@ export function ChatInterface({ scenario }: ChatInterfaceProps) {
     };
   }, [hasUserMessages]);
 
-  const addMessage = (msg: RoleplayMessage) =>
-    setMessages((prev) => [...prev, msg]);
-
   const handleSpeakToggle = (messageId: string, text: string) => {
     if (isPlaying(messageId)) {
       stop();
     } else {
       speak(text, messageId);
     }
+  };
+
+  // Detect if user wants to finish the conversation
+  const detectFinishIntent = (message: string): boolean => {
+    const lowerMessage = message.toLowerCase().trim();
+    const finishPhrases = [
+      'finish the conversation',
+      'finish talking',
+      'thank you for the chat',
+      'goodbye',
+      'good bye',
+      'talk to you later',
+      'bye',
+      'see you later',
+      'see you',
+      'gotta go',
+      'have to go',
+      'need to go'
+    ];
+    
+    const result = finishPhrases.some(phrase => lowerMessage.includes(phrase));
+    console.log('[DETECT-FINISH] Checking message:', message);
+    console.log('[DETECT-FINISH] Lower message:', lowerMessage);
+    console.log('[DETECT-FINISH] Result:', result);
+    return result;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -133,7 +164,53 @@ export function ChatInterface({ scenario }: ChatInterfaceProps) {
     setInputValue('');
     setIsLoading(true);
 
+    // Check if user wants to finish
+    const shouldAutoFinish = detectFinishIntent(text);
+    console.log('[AUTO-FINISH] User message:', text);
+    console.log('[AUTO-FINISH] Should auto-finish:', shouldAutoFinish);
+
     try {
+      // If user wants to finish, show a closing message instead of calling webhook
+      if (shouldAutoFinish && !autoFinishScheduled.current) {
+        autoFinishScheduled.current = true;
+        console.log('[AUTO-FINISH] User wants to finish, adding closing message...');
+        
+        // Random closing messages
+        const closingMessages = [
+          "Wrapping up the conversation...",
+          "Finishing the conversation...",
+          "Thank you for practicing with me today!",
+          "Great job! Let me prepare your feedback...",
+          "Excellent work! Preparing your session summary..."
+        ];
+        
+        const randomClosing = closingMessages[Math.floor(Math.random() * closingMessages.length)];
+        
+        const botMsg: RoleplayMessage = {
+          id: `bot-${Date.now()}`,
+          content: randomClosing,
+          sender: 'bot',
+          timestamp: Date.now(),
+        };
+        addMessage(botMsg);
+        setIsLoading(false);
+
+        // Auto-play closing message
+        setTimeout(() => {
+          speak(randomClosing, botMsg.id);
+        }, 300);
+
+        // Schedule auto-finish
+        console.log('[AUTO-FINISH] Scheduling auto-finish in 2 seconds...');
+        setTimeout(() => {
+          console.log('[AUTO-FINISH] Executing handleFinish now...');
+          handleFinish();
+        }, 2000);
+        
+        return; // Exit early, don't call webhook
+      }
+
+      // Normal flow: call webhook for bot response
       const reply = await roleplayConversationService.getBotResponse(
         scenario,
         [...messages, userMsg],
@@ -165,6 +242,17 @@ export function ChatInterface({ scenario }: ChatInterfaceProps) {
   };
 
   const handleFinish = async () => {
+    console.log('[HANDLE-FINISH] Starting handleFinish...');
+    console.log('[HANDLE-FINISH] User ID:', user?.id);
+    console.log('[HANDLE-FINISH] Messages count:', messages.length);
+    console.log('[HANDLE-FINISH] finishing state:', finishing);
+    
+    // Prevent duplicate calls
+    if (finishing) {
+      console.log('[HANDLE-FINISH] Already finishing, skipping duplicate call');
+      return;
+    }
+    
     // Stop all ongoing actions first
     stop();
 
@@ -172,20 +260,29 @@ export function ChatInterface({ scenario }: ChatInterfaceProps) {
     setError(null);
 
     try {
-      if (!user?.id || messages.length <= 1) {
+      // Get current messages from ref (always has latest value)
+      const currentMessages = messagesRef.current;
+
+      if (!user?.id || currentMessages.length <= 1) {
+        console.error('[HANDLE-FINISH] Validation failed - insufficient data');
+        console.error('[HANDLE-FINISH] Messages length:', currentMessages.length);
         throw new Error('Unable to save session. Please try again.');
       }
 
+      console.log('[HANDLE-FINISH] Calling completeSession with', currentMessages.length, 'messages');
       const sessionId = await roleplaySessionService.completeSession(
         user.id,
         scenario,
-        messages,
+        currentMessages,
         userPreferences
       );
 
+      console.log('[HANDLE-FINISH] Session completed, ID:', sessionId);
+      console.log('[HANDLE-FINISH] Redirecting to summary page...');
       router.replace(`/roleplay/summary/${sessionId}`);
       // Keep loading screen visible during navigation
     } catch (error: any) {
+      console.error('[HANDLE-FINISH] Error:', error);
       setError(error?.message || 'Error saving session. Please try again.');
       setFinishing(false); // Only hide loading on error
     }

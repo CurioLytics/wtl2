@@ -3,7 +3,7 @@
 import { createContext, useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/services/supabase/client';
-import { getCurrentUser, signOut as authSignOut } from '@/services/auth-service';
+import { getCurrentUser, signOut as authSignOut } from '@/services/auth/auth-service';
 import { AuthContextType } from '@/hooks/auth/use-auth';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 

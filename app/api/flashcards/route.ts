@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authenticateUser, handleApiError, parseRequestBody, createSuccessResponse } from '@/utils/api-helpers';
-import { vocabularyService } from '@/services/vocabulary-service';
+import { vocabularyService } from '@/services/vocabulary/vocabulary-service';
 
 /**
  * GET /api/flashcards (legacy endpoint - will be migrated to /api/vocabulary)

@@ -7,7 +7,9 @@ import { useAuth } from '@/hooks/auth/use-auth';
 import { supabase } from '@/services/supabase/client';
 import Image from 'next/image';
 import { FrameworkDialog } from './framework-dialog';
-import { Framework } from '@/services/framework-service';
+import { Framework } from '@/services/journal/framework-service';
+import { SkeletonCard } from '@/components/ui/skeleton';
+import { useAsyncState } from '@/hooks/common/use-async-state';
 
 interface TemplateCardsProps {
   onTemplateSelect?: (template: JournalTemplate) => void;
@@ -16,38 +18,32 @@ interface TemplateCardsProps {
 export function TemplateCards({ onTemplateSelect }: TemplateCardsProps) {
   const router = useRouter();
   const { user } = useAuth();
-  const [templates, setTemplates] = useState<JournalTemplate[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: templates, isLoading, execute: loadTemplates } = useAsyncState<JournalTemplate[]>([]);
   const [selectedFramework, setSelectedFramework] = useState<Framework | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const loadTemplates = async () => {
+  useEffect(() => {
     if (!user?.id) return;
 
-    const { data } = await supabase
-      .from('frameworks')
-      .select('profile_id, name, content, cover_image, description, is_pinned')
-      .eq('is_default', true)
-      .in('name', ['Morning Intentions', 'Evening Wind-Down'])
-      .order('name', { ascending: false })
-      .limit(2);
+    loadTemplates(async () => {
+      const { data } = await supabase
+        .from('frameworks')
+        .select('profile_id, name, content, cover_image, description, is_pinned')
+        .eq('is_default', true)
+        .in('name', ['Morning Intentions', 'Evening Wind-Down'])
+        .order('name', { ascending: false })
+        .limit(2);
 
-    const formattedTemplates: JournalTemplate[] = (data || []).map((template: any) => ({
-      id: encodeURIComponent(template.name),
-      profile_id: template.profile_id,
-      name: template.name,
-      content: template.content,
-      cover_image: template.cover_image,
-      description: template.description,
-      is_pinned: template.is_pinned
-    }));
-
-    setTemplates(formattedTemplates);
-    setIsLoading(false);
-  };
-
-  useEffect(() => {
-    loadTemplates();
+      return (data || []).map((template: any) => ({
+        id: encodeURIComponent(template.name),
+        profile_id: template.profile_id,
+        name: template.name,
+        content: template.content,
+        cover_image: template.cover_image,
+        description: template.description,
+        is_pinned: template.is_pinned
+      }));
+    });
   }, [user?.id]);
 
   const handleCardClick = (template: JournalTemplate) => {
@@ -93,13 +89,7 @@ export function TemplateCards({ onTemplateSelect }: TemplateCardsProps) {
       <div className="premium-theme">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl mx-auto">
           {[1, 2].map((index) => (
-            <div key={index} className="bg-white rounded-xl overflow-hidden">
-              <div className="bg-gray-200 animate-pulse h-16 sm:h-20 w-full" />
-              <div className="p-3 space-y-2">
-                <div className="h-4 bg-gray-200 rounded animate-pulse" />
-                <div className="h-3 bg-gray-200 rounded animate-pulse" />
-              </div>
-            </div>
+            <SkeletonCard key={index} showImage lines={2} />
           ))}
         </div>
       </div>
@@ -109,7 +99,7 @@ export function TemplateCards({ onTemplateSelect }: TemplateCardsProps) {
   return (
     <div className="premium-theme">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl mx-auto">
-        {templates.map((template) => (
+        {(templates || []).map((template) => (
           <div
             key={template.id}
             onClick={() => handleCardClick(template)}

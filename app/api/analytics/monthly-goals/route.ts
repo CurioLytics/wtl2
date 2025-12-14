@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser, handleApiError, createSuccessResponse } from '@/utils/api-helpers';
-import { analyticsService } from '@/services/analytics-service';
+import { analyticsService } from '@/services/analytics/analytics-service';
 
 /**
  * GET /api/analytics/monthly-goals
