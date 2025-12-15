@@ -21,7 +21,7 @@ class RoleplayConversationService {
     messages: RoleplayMessage[],
     sessionId: string,
     userPreferences: { name: string; english_level: string; style: string }
-  ): Promise<string> {
+  ): Promise<{ response: string; suggested_answer?: string }> {
     // Get only the last user message
     const lastUserMessage = messages.filter(msg => msg.sender === 'user').slice(-1)[0];
 
@@ -91,7 +91,28 @@ class RoleplayConversationService {
     }
 
     const data = await response.json();
-    return data.message || data.output || 'No response received';
+    
+    // Handle new response structure
+    if (data.response) {
+      // Check if data.response is itself an object with nested response (double-encoded)
+      if (typeof data.response === 'object' && data.response.response) {
+        return {
+          response: data.response.response,
+          suggested_answer: data.response.suggested_answer
+        };
+      }
+      
+      // Otherwise, use data.response directly as string
+      return {
+        response: data.response,
+        suggested_answer: data.suggested_answer
+      };
+    }
+    
+    // Fallback to old structure
+    return {
+      response: data.message || data.output || 'No response received'
+    };
   }
 
   /**

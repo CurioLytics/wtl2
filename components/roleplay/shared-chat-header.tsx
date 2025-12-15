@@ -41,11 +41,11 @@ export function SharedChatHeader({
   onExit,
   theme = 'blue',
 }: SharedChatHeaderProps) {
-  const finishButtonClass = theme === 'purple' ? 'btn-purple-primary' : 'btn-blue-primary';
+  const finishButtonClass = theme === 'purple' ? 'btn-purple-outline' : 'btn-blue-outline';
   const exitOutlineClass = theme === 'purple' ? 'btn-purple-outline' : 'btn-blue-outline';
   
   return (
-    <div className="p-3 border-b flex justify-between items-center bg-white">
+    <div className="p-3 flex justify-between items-center bg-white">
       <Dialog>
         <DialogTrigger asChild>
           <button

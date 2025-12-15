@@ -82,7 +82,7 @@ export function useSharedChatLogic(scenario: RoleplayScenario) {
     return finishPhrases.some(phrase => lowerMessage.includes(phrase));
   }, []);
 
-  const getBotResponse = useCallback(async (userMsg: RoleplayMessage): Promise<string> => {
+  const getBotResponse = useCallback(async (userMsg: RoleplayMessage): Promise<{ response: string; suggested_answer?: string }> => {
     return await roleplayConversationService.getBotResponse(
       scenario,
       [...messagesRef.current, userMsg],

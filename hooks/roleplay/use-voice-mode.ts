@@ -28,6 +28,7 @@ export function useVoiceMode({
   const autoActivateRef = useRef<NodeJS.Timeout | null>(null);
   const autoSendRef = useRef<NodeJS.Timeout | null>(null);
   const lastInterimTextRef = useRef<string>('');
+  const messageSentRef = useRef<boolean>(false);
 
   // Clear all timers
   const clearTimers = useCallback(() => {
@@ -66,6 +67,7 @@ export function useVoiceMode({
     clearTimers();
     setError(null);
     setVoiceState('listening');
+    messageSentRef.current = false; // Reset sent flag
     
     // Set to English
     voiceService.setLanguage('en-US');
@@ -80,6 +82,13 @@ export function useVoiceMode({
     voiceService.startListening(
       (text, isFinal) => {
         if (isFinal) {
+          // Prevent duplicate sends
+          if (messageSentRef.current) {
+            return;
+          }
+          
+          messageSentRef.current = true;
+          
           // Clear all timers
           clearTimers();
           
@@ -90,6 +99,7 @@ export function useVoiceMode({
           onUserMessage(text);
           setInterimText('');
           setVoiceState('thinking');
+          lastInterimTextRef.current = '';
         } else {
           // User is speaking - update state
           if (voiceState === 'listening') {
@@ -106,7 +116,8 @@ export function useVoiceMode({
           
           // Set auto-send timer - if user pauses for 2 seconds, send message
           autoSendRef.current = setTimeout(() => {
-            if (lastInterimTextRef.current.trim()) {
+            if (!messageSentRef.current && lastInterimTextRef.current.trim()) {
+              messageSentRef.current = true;
               voiceService.stopListening();
               onUserMessage(lastInterimTextRef.current);
               setInterimText('');
@@ -140,8 +151,9 @@ export function useVoiceMode({
     clearTimers();
     voiceService.stopListening();
     
-    // If we have interim text, send it
-    if (interimText.trim()) {
+    // If we have interim text and haven't sent it yet, send it
+    if (!messageSentRef.current && interimText.trim()) {
+      messageSentRef.current = true;
       onUserMessage(interimText);
       setVoiceState('thinking');
     } else {

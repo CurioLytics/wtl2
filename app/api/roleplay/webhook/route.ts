@@ -182,7 +182,7 @@ export async function POST(request: Request) {
       console.warn(`[${requestId}] Empty response received from webhook`);
       return NextResponse.json(
         {
-          message: "I'm here to help with your conversation. What would you like to discuss?",
+          response: "I'm here to help with your conversation. What would you like to discuss?",
           warning: "Empty response from webhook"
         },
         { status: 200 }
@@ -193,29 +193,72 @@ export async function POST(request: Request) {
       // Try to parse the response as JSON
       const data = JSON.parse(responseText);
 
-      // Check for either 'message' or 'output' property
-      if (data.output) {
-        // Convert 'output' to 'message' format that our client expects
+      // Check if message or response contains a stringified JSON (double-encoded)
+      const stringField = data.message || data.response;
+      if (stringField && typeof stringField === 'string') {
+        try {
+          const nestedData = JSON.parse(stringField);
+          if (nestedData.response) {
+            // Successfully parsed nested JSON with new structure
+            return NextResponse.json(
+              { 
+                response: nestedData.response,
+                suggested_answer: nestedData.suggested_answer
+              },
+              { status: response.status }
+            );
+          }
+        } catch (e) {
+          // If parsing nested JSON fails, treat as plain text
+          return NextResponse.json(
+            { response: stringField },
+            { status: response.status }
+          );
+        }
+      }
+
+      // Check for direct response structure
+      if (data.response) {
+        // Check if data.response is itself an object with nested response
+        if (typeof data.response === 'object' && data.response.response) {
+          return NextResponse.json(
+            { 
+              response: data.response.response,
+              suggested_answer: data.response.suggested_answer
+            },
+            { status: response.status }
+          );
+        }
+        
+        // Otherwise, use data.response directly as the response string
         return NextResponse.json(
-          { message: data.output },
+          { 
+            response: data.response,
+            suggested_answer: data.suggested_answer
+          },
+          { status: response.status }
+        );
+      } else if (data.output) {
+        return NextResponse.json(
+          { response: data.output },
           { status: response.status }
         );
       } else if (data.message) {
-        // Return response as is if it has a 'message' property
-        return NextResponse.json(data, { status: response.status });
+        return NextResponse.json(
+          { response: data.message },
+          { status: response.status }
+        );
       } else if (response.ok) {
-        // No recognized response format but status is OK
         console.error(`[${requestId}] Invalid response format received:`, data);
         return NextResponse.json(
           {
-            message: "I'm sorry, I couldn't generate a proper response at this time. Please try again.",
+            response: "I'm sorry, I couldn't generate a proper response at this time. Please try again.",
             error: "Invalid response format"
           },
           { status: 200 }
         );
       }
 
-      // Return the response with appropriate status for error cases
       return NextResponse.json(data, { status: response.status });
     } catch (jsonError) {
       // Handle non-JSON responses
@@ -223,9 +266,9 @@ export async function POST(request: Request) {
 
       // If response is not JSON but status is OK, try to extract useful content
       if (response.ok) {
-        // Return the raw text as the message if we can't parse JSON
+        // Return the raw text as the response if we can't parse JSON
         return NextResponse.json(
-          { message: responseText || "Response received but couldn't be processed." },
+          { response: responseText || "Response received but couldn't be processed." },
           { status: 200 }
         );
       } else {

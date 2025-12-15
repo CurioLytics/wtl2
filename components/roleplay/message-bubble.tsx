@@ -1,8 +1,9 @@
 'use client';
 
 import { RoleplayMessage } from '@/types/roleplay';
-import { Volume2, Square } from 'lucide-react';
+import { Volume2, Square, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 
 interface MessageBubbleProps {
   message: RoleplayMessage;
@@ -14,6 +15,7 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message, roleName, compact = false, onSpeakToggle, isPlaying = false }: MessageBubbleProps) {
   const isUserMessage = message.sender === 'user';
+  const [showTooltip, setShowTooltip] = useState(false);
   
   const handleSpeakerClick = () => {
     if (onSpeakToggle) {
@@ -23,26 +25,38 @@ export function MessageBubble({ message, roleName, compact = false, onSpeakToggl
   
   return (
     <div className={`${compact ? 'mb-2' : 'mb-4'} flex ${isUserMessage ? 'justify-end' : 'justify-start'}`}>
-      {/* Avatar và tên - chỉ hiển thị cho tin nhắn bot */}
-      {!isUserMessage && !compact && (
-        <div className="flex flex-col items-center mr-2">
-          <div className="w-8 h-8 rounded-full bg-[var(--primary-blue-lighter)] flex items-center justify-center text-[var(--primary)] font-medium text-sm">
-            {roleName.charAt(0).toUpperCase()}
-          </div>
-          <span className="text-xs text-gray-500 mt-1">{roleName}</span>
-        </div>
-      )}
-      
-      {/* Compact avatar for conversation history */}
-      {!isUserMessage && compact && (
-        <div className="w-6 h-6 rounded-full bg-[var(--primary-blue-lighter)] flex items-center justify-center text-[var(--primary)] font-medium text-xs mr-2 mt-1">
-          {roleName.charAt(0).toUpperCase()}
-        </div>
-      )}
-      
       {/* Bong bóng tin nhắn */}
-      <div className={`${compact ? 'max-w-[80%]' : 'max-w-[70%]'} ${isUserMessage ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-800'} rounded-lg px-3 py-2 shadow-sm relative group`}>
-        <div className={`${compact ? 'text-xs' : 'text-sm'} break-words pr-8`}>{message.content}</div>
+      <div className={`${compact ? 'max-w-[85%]' : 'max-w-[75%]'} ${isUserMessage ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-800'} rounded-lg px-3 py-2 shadow-sm relative group`}>
+        <div className={`${compact ? 'text-xs' : 'text-sm'} break-words ${message.suggested_answer ? 'pr-16' : 'pr-8'}`}>{message.content}</div>
+        
+        {/* Suggested Answer Tooltip - Only for bot messages */}
+        {!isUserMessage && message.suggested_answer && (
+          <>
+            <div className="absolute top-9 right-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowTooltip(!showTooltip)}
+                className="h-6 w-6 text-purple-600 hover:text-purple-700"
+              >
+                <Sparkles className="h-3 w-3" />
+              </Button>
+            </div>
+            {showTooltip && (
+              <>
+                <div 
+                  className="fixed inset-0 z-[200]" 
+                  onClick={() => setShowTooltip(false)}
+                />
+                <div className="fixed z-[201] w-64 p-3 bg-white text-black text-xs rounded-lg shadow-2xl border-2 border-purple-600 whitespace-normal break-words" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+                  <div className="font-semibold mb-1">Gợi ý trả lời:</div>
+                  <div>{message.suggested_answer}</div>
+                </div>
+              </>
+            )}
+          </>
+        )}
         
         {/* Speaker icon */}
         {onSpeakToggle && (
@@ -67,23 +81,6 @@ export function MessageBubble({ message, roleName, compact = false, onSpeakToggl
           </Button>
         )}
       </div>
-      
-      {/* Avatar và tên - chỉ hiển thị cho tin nhắn người dùng */}
-      {isUserMessage && !compact && (
-        <div className="flex flex-col items-center ml-2">
-          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-800 font-medium text-sm">
-            {roleName.charAt(0).toUpperCase()}
-          </div>
-          <span className="text-xs text-gray-500 mt-1">{roleName}</span>
-        </div>
-      )}
-      
-      {/* Compact avatar for user messages */}
-      {isUserMessage && compact && (
-        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-800 font-medium text-xs ml-2 mt-1">
-          {roleName.charAt(0).toUpperCase()}
-        </div>
-      )}
     </div>
   );
 }

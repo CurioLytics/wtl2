@@ -91,18 +91,37 @@ export function ChatInterface({ scenario }: ChatInterfaceProps) {
       }
 
       // Normal flow: call webhook for bot response
-      const reply = await getBotResponse(userMsg);
+      const botResponseData = await getBotResponse(userMsg);
+      
+      // Safety check: if response looks like JSON string, parse it
+      let actualResponse = botResponseData.response;
+      let actualSuggestedAnswer = botResponseData.suggested_answer;
+      
+      if (typeof actualResponse === 'string' && actualResponse.trim().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(actualResponse);
+          if (parsed.response) {
+            actualResponse = parsed.response;
+            actualSuggestedAnswer = parsed.suggested_answer;
+          }
+        } catch (e) {
+          // Keep original if parsing fails
+        }
+      }
+      
       const botMsg: RoleplayMessage = {
         id: `bot-${Date.now()}`,
-        content: reply,
+        content: actualResponse,
         sender: 'bot',
         timestamp: Date.now(),
+        suggested_answer: actualSuggestedAnswer,
       };
+      
       addMessage(botMsg);
 
       // Auto-play bot response
       setTimeout(() => {
-        speak(reply, botMsg.id);
+        speak(actualResponse, botMsg.id);
       }, 300);
     } catch (error: any) {
       addMessage({

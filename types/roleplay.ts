@@ -16,6 +16,7 @@ export interface RoleplayMessage {
   content: string;
   sender: 'user' | 'bot';
   timestamp: number;
+  suggested_answer?: string;
 }
 
 export interface GrammarDetail {
