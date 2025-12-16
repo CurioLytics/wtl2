@@ -36,6 +36,15 @@ export function ScenarioFilter({ onFilterChange, currentTopic, currentDifficulty
     setSelectedDifficulty(currentDifficulty);
   }, [currentTopic, currentDifficulty]);
 
+  // Tự động reset filter còn lại khi chuyển loại filter
+  useEffect(() => {
+    if (filterType === 'topic' && selectedDifficulty !== null) {
+      handleDifficultyChange(null);
+    } else if (filterType === 'difficulty' && selectedTopic !== null) {
+      handleTopicChange(null);
+    }
+  }, [filterType]);
+
   return (
     <div className="mb-6 bg-white rounded-lg p-4 shadow-sm">
       <div className="flex items-center gap-3 mb-3">

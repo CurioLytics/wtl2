@@ -12,9 +12,10 @@ import { RoleplayMessage, RoleplayScenario } from '@/types/roleplay';
 
 interface VoiceModeChatInterfaceProps {
   scenario: RoleplayScenario;
+  pauseDelay?: number; // Auto-send delay in seconds (default 2)
 }
 
-export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps) {
+export function VoiceModeChatInterface({ scenario, pauseDelay = 2 }: VoiceModeChatInterfaceProps) {
   const { state, actions, refs } = useSharedChatLogic(scenario);
   const { messages, finishing, error, hasUserMessages } = state;
   const { addMessage, handleFinish, handleExit, detectFinishIntent, getBotResponse } = actions;
@@ -44,6 +45,8 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
     try {
       if (shouldAutoFinish && !isSessionFinished.current && !autoFinishScheduled.current) {
         autoFinishScheduled.current = true;
+        isSessionFinished.current = true; // Mark session as finished immediately
+
         const randomClosing = getClosingMessage();
         const botMsg: RoleplayMessage = {
           id: `bot-${Date.now()}`,
@@ -53,9 +56,11 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
         };
         addMessage(botMsg);
 
-        if (!isSessionFinished.current) {
-          playBotMessage(randomClosing, botMsg.id);
-        }
+        // Play closing message without auto-activating mic
+        playBotMessage(randomClosing, botMsg.id, true); // true = skip auto-activation
+
+        // Stop any ongoing recording
+        stopListening();
 
         setTimeout(() => handleFinish(), 5000);
         return;
@@ -67,7 +72,7 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
       // Safety check: if response looks like JSON string, parse it
       let actualResponse = botResponseData.response;
       let actualSuggestedAnswer = botResponseData.suggested_answer;
-      
+
       if (typeof actualResponse === 'string' && actualResponse.trim().startsWith('{')) {
         try {
           const parsed = JSON.parse(actualResponse);
@@ -87,7 +92,7 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
         timestamp: Date.now(),
         suggested_answer: actualSuggestedAnswer,
       };
-      
+
       addMessage(botMsg);
 
       if (!isSessionFinished.current) {
@@ -119,7 +124,11 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
     startListening,
     stopListening,
     isSupported,
-  } = useVoiceMode({ onUserMessage: handleUserMessage });
+  } = useVoiceMode({
+    onUserMessage: handleUserMessage,
+    isSessionFinished: () => isSessionFinished.current,
+    autoSendDelay: pauseDelay * 1000 // Convert seconds to milliseconds
+  });
 
   useEffect(() => {
     if (countdown === null) return;
@@ -205,6 +214,7 @@ export function VoiceModeChatInterface({ scenario }: VoiceModeChatInterfaceProps
           showTextInput={showTextInput}
           backupInput={backupInput}
           disabled={voiceState === 'thinking' || finishing || isSessionFinished.current}
+          pauseDelay={pauseDelay}
           onMicClick={handleMicClick}
           onToggleInput={() => setShowTextInput(!showTextInput)}
           onTextChange={setBackupInput}

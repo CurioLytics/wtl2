@@ -8,6 +8,7 @@ type VoiceState = 'idle' | 'bot-speaking' | 'listening' | 'user-speaking' | 'thi
 
 interface UseVoiceModeOptions {
   onUserMessage: (text: string) => void;
+  isSessionFinished?: () => boolean; // Check if session is finished
   autoActivateDelay?: number; // Delay after bot finishes (ms)
   listeningTimeout?: number; // Timeout for user silence (ms)
   autoSendDelay?: number; // Auto-send after user pauses (ms)
@@ -15,6 +16,7 @@ interface UseVoiceModeOptions {
 
 export function useVoiceMode({
   onUserMessage,
+  isSessionFinished,
   autoActivateDelay = 1500, // 1.5 seconds
   listeningTimeout = 12000, // 12 seconds
   autoSendDelay = 2000, // 2 seconds after user pauses
@@ -23,7 +25,7 @@ export function useVoiceMode({
   const [error, setError] = useState<string | null>(null);
   const [interimText, setInterimText] = useState('');
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
-  
+
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const autoActivateRef = useRef<NodeJS.Timeout | null>(null);
   const autoSendRef = useRef<NodeJS.Timeout | null>(null);
@@ -68,7 +70,7 @@ export function useVoiceMode({
     setError(null);
     setVoiceState('listening');
     messageSentRef.current = false; // Reset sent flag
-    
+
     // Set to English
     voiceService.setLanguage('en-US');
 
@@ -81,61 +83,45 @@ export function useVoiceMode({
 
     voiceService.startListening(
       (text, isFinal) => {
-        if (isFinal) {
-          // Prevent duplicate sends
-          if (messageSentRef.current) {
-            return;
+        // IMPORTANT: Ignore isFinal from Speech Recognition API
+        // The browser automatically marks results as final when it detects a pause,
+        // but we want to use our own configurable autoSendDelay timer instead.
+        // This gives users the full configured pause time (2-10 seconds).
+
+        // Always treat as interim - let our timer handle sending
+        if (voiceState === 'listening') {
+          setVoiceState('user-speaking');
+        }
+        setInterimText(text);
+        lastInterimTextRef.current = text;
+
+        // Clear previous auto-send timer
+        if (autoSendRef.current) {
+          clearTimeout(autoSendRef.current);
+          autoSendRef.current = null;
+        }
+
+        // Set auto-send timer - if user pauses for configured delay, send message
+        autoSendRef.current = setTimeout(() => {
+          if (!messageSentRef.current && lastInterimTextRef.current.trim()) {
+            messageSentRef.current = true;
+            voiceService.stopListening();
+            onUserMessage(lastInterimTextRef.current);
+            setInterimText('');
+            setVoiceState('thinking');
+            lastInterimTextRef.current = '';
           }
-          
-          messageSentRef.current = true;
-          
-          // Clear all timers
-          clearTimers();
-          
-          // Stop listening
-          voiceService.stopListening();
-          
-          // Send message
-          onUserMessage(text);
-          setInterimText('');
-          setVoiceState('thinking');
-          lastInterimTextRef.current = '';
-        } else {
-          // User is speaking - update state
-          if (voiceState === 'listening') {
-            setVoiceState('user-speaking');
-          }
-          setInterimText(text);
-          lastInterimTextRef.current = text;
-          
-          // Clear previous auto-send timer
-          if (autoSendRef.current) {
-            clearTimeout(autoSendRef.current);
-            autoSendRef.current = null;
-          }
-          
-          // Set auto-send timer - if user pauses for 2 seconds, send message
-          autoSendRef.current = setTimeout(() => {
-            if (!messageSentRef.current && lastInterimTextRef.current.trim()) {
-              messageSentRef.current = true;
-              voiceService.stopListening();
-              onUserMessage(lastInterimTextRef.current);
-              setInterimText('');
-              setVoiceState('thinking');
-              lastInterimTextRef.current = '';
-            }
-          }, autoSendDelay);
-          
-          // Reset timeout on speech activity
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = setTimeout(() => {
-              voiceService.stopListening();
-              setVoiceState('idle');
-              setInterimText('');
-              lastInterimTextRef.current = '';
-            }, listeningTimeout);
-          }
+        }, autoSendDelay);
+
+        // Reset timeout on speech activity
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = setTimeout(() => {
+            voiceService.stopListening();
+            setVoiceState('idle');
+            setInterimText('');
+            lastInterimTextRef.current = '';
+          }, listeningTimeout);
         }
       },
       (errorMsg) => {
@@ -150,7 +136,7 @@ export function useVoiceMode({
   const stopListening = useCallback(() => {
     clearTimers();
     voiceService.stopListening();
-    
+
     // If we have interim text and haven't sent it yet, send it
     if (!messageSentRef.current && interimText.trim()) {
       messageSentRef.current = true;
@@ -159,37 +145,43 @@ export function useVoiceMode({
     } else {
       setVoiceState('idle');
     }
-    
+
     setInterimText('');
     lastInterimTextRef.current = '';
   }, [interimText, onUserMessage, clearTimers]);
 
   // Play bot message with auto-activation
-  const playBotMessage = useCallback((text: string, messageId: string) => {
+  const playBotMessage = useCallback((text: string, messageId: string, skipAutoActivate: boolean = false) => {
     // Stop listening if currently recording
     if (voiceState === 'listening' || voiceState === 'user-speaking') {
       voiceService.stopListening();
       setInterimText('');
       lastInterimTextRef.current = '';
     }
-    
+
     clearTimers();
     setVoiceState('bot-speaking');
-    
+
     ttsService.speak(
       text,
       messageId,
       () => setPlayingMessageId(messageId),
       () => {
         setPlayingMessageId(null);
-        
-        // Auto-activate mic after delay
-        autoActivateRef.current = setTimeout(() => {
-          startListening();
-        }, autoActivateDelay);
+
+        // Only auto-activate mic if not skipped and session is not finished
+        if (!skipAutoActivate && (!isSessionFinished || !isSessionFinished())) {
+          // Auto-activate mic after delay
+          autoActivateRef.current = setTimeout(() => {
+            startListening();
+          }, autoActivateDelay);
+        } else {
+          // Session is finished, go to idle without auto-activation
+          setVoiceState('idle');
+        }
       }
     );
-  }, [autoActivateDelay, startListening, clearTimers]);
+  }, [autoActivateDelay, startListening, clearTimers, voiceState, isSessionFinished]);
 
   // Stop bot speaking
   const stopBotSpeaking = useCallback(() => {

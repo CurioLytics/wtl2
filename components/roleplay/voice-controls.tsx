@@ -9,6 +9,7 @@ interface VoiceControlsProps {
   showTextInput: boolean;
   backupInput: string;
   disabled: boolean;
+  pauseDelay?: number; // Pause delay in seconds (default 2)
   onMicClick: () => void;
   onToggleInput: () => void;
   onTextChange: (text: string) => void;
@@ -21,6 +22,7 @@ export function VoiceControls({
   showTextInput,
   backupInput,
   disabled,
+  pauseDelay = 2,
   onMicClick,
   onToggleInput,
   onTextChange,
@@ -97,16 +99,15 @@ export function VoiceControls({
             <button
               onClick={onMicClick}
               disabled={disabled}
-              className={`relative h-16 w-16 rounded-full transition-all duration-500 ease-out transform bg-gradient-to-br from-purple-500 via-purple-600 to-pink-600 ${
-                isListening ? 'scale-110 animate-breathe' : 'hover:scale-110'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              className={`relative h-16 w-16 rounded-full transition-all duration-500 ease-out transform bg-gradient-to-br from-purple-500 via-purple-600 to-pink-600 ${isListening ? 'scale-110 animate-breathe' : 'hover:scale-110'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               <div className={`absolute inset-0 rounded-full transition-opacity duration-500 ${isListening ? 'opacity-100 bg-gradient-to-br from-white/20 to-yellow-200/20 animate-pulse' : 'opacity-0'}`} />
               <Mic className={`relative z-10 h-7 w-7 text-white mx-auto transition-transform duration-300 ${isListening ? 'animate-bounce-subtle' : ''}`} />
             </button>
           </div>
 
-          {isListening && <p className="text-xs text-gray-500">Nhấn để gửi tin nhắn</p>}
+          {isListening && <p className="text-xs text-gray-500">Nhấn hoặc dừng {pauseDelay}s để gửi tin nhắn</p>}
         </div>
       )}
     </div>

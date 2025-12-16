@@ -70,16 +70,16 @@ class VoiceService {
         onError('Trình duyệt không hỗ trợ truy cập microphone. Vui lòng dùng Chrome phiên bản mới nhất.');
         return;
       }
-      
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       // Stop the stream immediately - we just needed to get permission
       stream.getTracks().forEach(track => track.stop());
     } catch (err: any) {
       console.error('Microphone permission error:', err);
-      
+
       // Check if this is the Android overlay permission issue
       const isAndroid = /android/i.test(navigator.userAgent);
-      
+
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         if (isAndroid) {
           // Android overlay permission issue - very common
@@ -111,14 +111,28 @@ class VoiceService {
     }
 
     this.recognition.onresult = (event: any) => {
-      // Get the latest result
+      // IMPORTANT: Concatenate ALL results, not just the last one
+      // Speech Recognition API returns multiple result objects as user speaks
+      // We need to combine them all to get the full transcript
+
+      let fullTranscript = '';
+
+      // Loop through all results and concatenate them
+      for (let i = 0; i < event.results.length; i++) {
+        const result = event.results[i];
+        const transcript = result[0].transcript;
+        fullTranscript += transcript + ' ';
+      }
+
+      const text = fullTranscript.trim();
+
+      // Get the isFinal status from the last result
       const lastResultIndex = event.results.length - 1;
-      const result = event.results[lastResultIndex];
-      const text = result[0].transcript.trim();
-      
-      // Emit both interim and final results
+      const isFinal = event.results[lastResultIndex].isFinal;
+
+      // Emit the full concatenated transcript
       if (text) {
-        onResult(text, result.isFinal);
+        onResult(text, isFinal);
       }
     };
 

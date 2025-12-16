@@ -26,6 +26,7 @@ export default function ChatSessionPage() {
   const router = useRouter();
   const id = params?.id as string;
   const mode = searchParams?.get('mode') || 'text'; // Default to text mode
+  const pauseDelay = Number(searchParams?.get('pauseDelay')) || 2; // Default to 2 seconds
 
   const [scenario, setScenario] = useState<RoleplayScenario | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,7 +124,7 @@ export default function ChatSessionPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       {mode === 'voice' ? (
-        <VoiceModeChatInterface scenario={scenario} />
+        <VoiceModeChatInterface scenario={scenario} pauseDelay={pauseDelay} />
       ) : (
         <ChatInterface scenario={scenario} />
       )}

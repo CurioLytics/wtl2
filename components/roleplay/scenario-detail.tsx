@@ -28,6 +28,7 @@ export function ScenarioDetail({ scenario }: ScenarioDetailProps) {
   const router = useRouter();
   const [showModeDialog, setShowModeDialog] = useState(false);
   const [showVoiceWarning, setShowVoiceWarning] = useState(false);
+  const [pauseDelay, setPauseDelay] = useState(2); // Default 2 seconds
 
   const handleStartSession = () => {
     if (!scenario.starter_message) {
@@ -45,7 +46,10 @@ export function ScenarioDetail({ scenario }: ScenarioDetailProps) {
   const startWithMode = (mode: 'text' | 'voice') => {
     setShowModeDialog(false);
     setShowVoiceWarning(false);
-    router.push(`/roleplay/session/${scenario.id}?mode=${mode}`);
+    const url = mode === 'voice'
+      ? `/roleplay/session/${scenario.id}?mode=${mode}&pauseDelay=${pauseDelay}`
+      : `/roleplay/session/${scenario.id}?mode=${mode}`;
+    router.push(url);
   };
 
   const handleBackClick = () => {
@@ -164,14 +168,35 @@ export function ScenarioDetail({ scenario }: ScenarioDetailProps) {
 
           <div className="py-4 space-y-4">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm text-gray-700 font-medium mb-2">
+              <p className="text-sm text-gray-700 font-medium mb-3">
                 Chế độ giọng nói yêu cầu phản hồi nhanh:
               </p>
               <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside">
                 <li>Bạn có <strong>tối đa 12 giây</strong> để suy nghĩ</li>
-                <li>Mỗi lần dừng không quá <strong>2 giây</strong></li>
-                <li> Khi muốn kết thúc hội thoại, nói "Finish the conversation" hoặc nhấn nút "Finish"</li>
+                <li>Mỗi lần dừng không quá <strong>{pauseDelay} giây</strong></li>
+                <li>Khi muốn kết thúc hội thoại, nói "Finish the conversation" hoặc nhấn nút "Finish"</li>
               </ul>
+            </div>
+
+            {/* Pause Delay Selector */}
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <label className="text-sm text-gray-700 font-medium mb-2 block">
+                ⚙️ Thời gian dừng tối đa:
+              </label>
+              <select
+                value={pauseDelay}
+                onChange={(e) => setPauseDelay(Number(e.target.value))}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary-purple)] focus:border-transparent"
+              >
+                {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(seconds => (
+                  <option key={seconds} value={seconds}>
+                    {seconds} giây {seconds === 2 ? '(Mặc định - Khuyến nghị)' : ''}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-2">
+                Thời gian hệ thống chờ sau khi bạn dừng nói trước khi tự động gửi tin nhắn.
+              </p>
             </div>
 
             <p className="text-sm text-gray-600">
