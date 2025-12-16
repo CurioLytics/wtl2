@@ -138,12 +138,15 @@ function generateCalendar(date: Date, goalStatuses: Map<string, DailyGoalStatus>
       today.getFullYear() === year;
 
     // Check if all goals are completed for this day
+    // Use the database flag if available, otherwise calculate
     const dayGoals = goalStatuses.get(dateKey);
-    const allGoalsCompleted = dayGoals ?
-      dayGoals.vocab_created.completed >= dayGoals.vocab_created.target &&
-      dayGoals.journal_created.completed >= dayGoals.journal_created.target &&
-      dayGoals.roleplay_completed.completed >= dayGoals.roleplay_completed.target
-      : false;
+    const allGoalsCompleted = dayGoals?.all_goals_met ?? (
+      dayGoals ?
+        dayGoals.vocab_created.completed >= dayGoals.vocab_created.target &&
+        dayGoals.journal_created.completed >= dayGoals.journal_created.target &&
+        dayGoals.roleplay_completed.completed >= dayGoals.roleplay_completed.target
+        : false
+    );
 
     calendar.push({ date: currentDate, isToday, allGoalsCompleted });
   }

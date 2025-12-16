@@ -24,7 +24,6 @@ const DATE_PRESETS = [
   { value: 'all' as DatePreset, label: 'Tất cả', days: 0 }, // Thay 365 bằng 0 để signal "all"
 ];
 
-// Hàm tiện ích để chuẩn hóa ngày về 00:00:00
 const startOfDay = (date: Date): Date => {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
@@ -38,30 +37,21 @@ export default function ReportPage() {
   const [isLoadingCalendar, setIsLoadingCalendar] = useState(true);
   const [dailyGoalData, setDailyGoalData] = useState<DailyGoalStatus | null>(null);
   const [isDailyGoalLoading, setIsDailyGoalLoading] = useState(true);
-  
-  // CHỈ GIỮ 1 STATE TOOLTIP
   const [tooltipOpen, setTooltipOpen] = useState(false);
 
-  // Memoize date range calculation
   const { startDate, endDate } = useMemo(() => {
-    // 1. Lấy ngày kết thúc (hôm nay) và set về 00:00:00 để truy vấn data trong ngày hôm nay
-    const endDate = startOfDay(new Date()); 
+    const endDate = startOfDay(new Date());
     const daysAgo = DATE_PRESETS.find(p => p.value === datePreset)?.days || 7;
 
     let startDate: Date;
 
     if (daysAgo === 0) {
-      // Logic cho 'Tất cả': Gửi null hoặc ngày rất xa trong quá khứ
-      // Tuy nhiên, để tránh lỗi, ta gửi 1 ngày 365 ngày trước (đề xuất xử lý 'all' ở backend)
-      // Tùy chọn: Gửi new Date(0) nếu muốn tất cả, hoặc 1 năm trước:
-      startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000); 
+      startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
     } else {
-      // Cho N ngày bao gồm hôm nay, lùi lại (N-1) ngày.
       const msAgo = (daysAgo - 1) * 24 * 60 * 60 * 1000;
       startDate = new Date(Date.now() - msAgo);
     }
-    
-    // Đảm bảo startDate được thiết lập về 00:00:00
+
     startDate = startOfDay(startDate);
 
     return { startDate, endDate };
@@ -69,7 +59,6 @@ export default function ReportPage() {
 
   const { data, isLoading, error, refetch } = useAnalytics({ startDate, endDate });
 
-  // Fetch daily goal once on mount (not affected by date filter)
   useEffect(() => {
     async function fetchDailyGoal() {
       if (!user?.id) return;
@@ -97,22 +86,6 @@ export default function ReportPage() {
     fetchDailyGoal();
   }, [user?.id]);
 
-  // Debug logging
-  useEffect(() => {
-    if (data) {
-      console.log('[ReportPage] Analytics data:', {
-        weeklyActivity: data.weeklyActivity,
-        weeklyActivityLength: data.weeklyActivity?.length,
-        dailyGoal: data.dailyGoal,
-        streak: data.streak,
-        // Thêm log để kiểm tra startDate/endDate sau khi fix
-        startDate: startDate.toISOString(), 
-        endDate: endDate.toISOString(),
-      });
-    }
-  }, [data, startDate, endDate]); // Thêm dependencies
-
-  // Fetch monthly goal statuses for calendar
   useEffect(() => {
     async function fetchMonthlyGoals() {
       if (!user?.id) return;
@@ -128,7 +101,6 @@ export default function ReportPage() {
         const result = await response.json();
 
         if (result.success && result.data?.goalStatuses) {
-          // Convert object back to Map with proper typing
           const statusMap = new Map(Object.entries(result.data.goalStatuses)) as Map<string, DailyGoalStatus>;
           setMonthlyGoals(statusMap);
         }
@@ -142,7 +114,6 @@ export default function ReportPage() {
     fetchMonthlyGoals();
   }, [user?.id]);
 
-  // Loading state
   if (isLoading && !data) {
     return (
       <div className="max-w-7xl mx-auto px-4 space-y-8 py-8">
@@ -150,7 +121,6 @@ export default function ReportPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Report</h1>
 
           <div className="space-y-6">
-            {/* Loading skeletons */}
             <div className="grid gap-6 md:grid-cols-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="animate-pulse">
@@ -186,7 +156,6 @@ export default function ReportPage() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="max-w-7xl mx-auto px-4 space-y-8 py-8">
@@ -212,7 +181,6 @@ export default function ReportPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 space-y-8 py-8">
-      {/* HEADER */}
       <div className="bg-white shadow-md rounded-2xl p-8">
         <div className="flex items-center justify-between">
           <div>
@@ -224,7 +192,6 @@ export default function ReportPage() {
         </div>
       </div>
 
-      {/* Section: Tổng quan */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 pb-3">
           <div className="h-8 w-1 bg-gradient-to-b from-blue-600 to-purple-600 rounded-full"></div>
@@ -232,9 +199,8 @@ export default function ReportPage() {
             Tổng Quan
           </h2>
         </div>
-        
+
         <div id="overview" className="grid gap-6 lg:grid-cols-3">
-          {/* Column 1: Daily Goals */}
           <div className="lg:col-span-1">
             <DailyGoalCard
               data={dailyGoalData}
@@ -242,11 +208,8 @@ export default function ReportPage() {
             />
           </div>
 
-          {/* Column 2: Nested grid with Streak cards and Calendar */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Row 1: Streak Cards - Side by side */}
             <div className="grid grid-cols-2 gap-6">
-              {/* Current Streak */}
               <Card className="relative overflow-hidden bg-white shadow-md rounded-2xl border-2 border-gray-200 hover:border-gray-300 transition-all duration-300 hover:shadow-xl hover:scale-105">
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center gap-2">
@@ -279,7 +242,6 @@ export default function ReportPage() {
                 </CardContent>
               </Card>
 
-              {/* Longest Streak */}
               <Card className="bg-white shadow-md rounded-2xl border-2 border-gray-200 hover:border-gray-300 transition-all duration-300 hover:shadow-xl hover:scale-105">
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center gap-2">
@@ -298,7 +260,6 @@ export default function ReportPage() {
               </Card>
             </div>
 
-            {/* Row 2: Calendar (full width) */}
             <Card className="bg-white shadow-md rounded-2xl border-2 border-gray-200 hover:border-gray-300 transition-all duration-300">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -308,7 +269,6 @@ export default function ReportPage() {
                       <TooltipTrigger asChild>
                         <button
                           className="touch-manipulation"
-                          // Sử dụng onTouchEnd hoặc onPointerDown cho UX tốt hơn trên mobile
                           onClick={(e) => {
                             e.preventDefault();
                             setTooltipOpen(!tooltipOpen);
@@ -338,41 +298,36 @@ export default function ReportPage() {
         </div>
       </div>
 
-      {/* Section: Phân tích */}
       <div className="space-y-6">
         <div className="flex items-center justify-between pb-3">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-1 bg-gradient-to-b from-green-600 to-blue-600 rounded-full"></div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                Phân Tích Chi Tiết
-              </h2>
-            </div>
-            
-            {/* Time Filter - Controls both charts */}
-            <div className="flex gap-2 flex-wrap">
-              {DATE_PRESETS.map((preset) => (
-                <Button
-                  key={preset.value}
-                  variant={datePreset === preset.value ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setDatePreset(preset.value)}
-                  className={cn(
-                    "transition-all duration-200",
-                    datePreset === preset.value 
-                      ? 'bg-gray-900 hover:bg-gray-800 text-white' 
-                      : 'border-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400'
-                  )}
-                >
-                  {preset.label}
-                </Button>
-              ))}
-            </div>
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-1 bg-gradient-to-b from-green-600 to-blue-600 rounded-full"></div>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+              Phân Tích Chi Tiết
+            </h2>
           </div>
-        
 
-        {/* Charts Grid */}
+          <div className="flex gap-2 flex-wrap">
+            {DATE_PRESETS.map((preset) => (
+              <Button
+                key={preset.value}
+                variant={datePreset === preset.value ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setDatePreset(preset.value)}
+                className={cn(
+                  "transition-all duration-200",
+                  datePreset === preset.value
+                    ? 'bg-gray-900 hover:bg-gray-800 text-white'
+                    : 'border-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400'
+                )}
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid gap-6 lg:grid-cols-5">
-          {/* SỬA ID: Đặt ID cho từng chart để SectionNavigation hoạt động tốt hơn */}
           <div id="activity-section" className="lg:col-span-2">
             <WeeklyActivityChart
               data={data?.weeklyActivity || []}
@@ -389,19 +344,18 @@ export default function ReportPage() {
         </div>
       </div>
 
-      {/* Motivational footer */}
       {isStreakActive && streak && streak.current_streak >= 7 && (
-          <Card className="bg-white shadow-lg rounded-2xl border-2 border-emerald-400">
-            <CardContent className="p-8 text-center">
-              <p className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-                🎉 Tuyệt vời! Bạn đã duy trì chuỗi {streak.current_streak} ngày! Tiếp tục nhé! 🚀
-              </p>
-              <p className="text-sm text-gray-600 mt-2">
-                Bạn đang làm rất tốt! Hãy tiếp tục phát huy!
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        <Card className="bg-white shadow-lg rounded-2xl border-2 border-emerald-400">
+          <CardContent className="p-8 text-center">
+            <p className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
+              🎉 Tuyệt vời! Bạn đã duy trì chuỗi {streak.current_streak} ngày! Tiếp tục nhé! 🚀
+            </p>
+            <p className="text-sm text-gray-600 mt-2">
+              Bạn đang làm rất tốt! Hãy tiếp tục phát huy!
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

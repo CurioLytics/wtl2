@@ -77,7 +77,7 @@ export class AnalyticsService {
       if (eventsResult.error) throw eventsResult.error;
 
       const profile = profileResult.data;
-      
+
       // Client-side precision filtering and aggregation (O(m))
       const eventCounts: Record<string, number> = {};
       if (eventsResult.data?.length) {
@@ -134,11 +134,11 @@ export class AnalyticsService {
   ): Promise<WeeklyActivityData[]> {
     try {
       const supabase = await this.getSupabaseClient();
-      
+
       // Extend date range to capture full days in user's timezone
       const startISO = new Date(startDate.getTime() - 86400000).toISOString(); // -1 day buffer
       const endISO = new Date(endDate.getTime() + 86400000).toISOString();     // +1 day buffer
-      
+
       // OPTIMIZATION: Filter at database level to reduce data transfer
       const { data, error } = await (supabase as any)
         .from('learning_events')
@@ -270,6 +270,12 @@ export class AnalyticsService {
     try {
       const supabase = await this.getSupabaseClient();
 
+      console.log('[trackLearningEvent] Recording event:', {
+        profileId,
+        eventType,
+        metadata
+      });
+
       // 1. Insert learning event
       const { error: eventError } = await (supabase as any)
         .from('learning_events')
@@ -281,12 +287,15 @@ export class AnalyticsService {
 
       if (eventError) throw eventError;
 
+      console.log('[trackLearningEvent] Event recorded successfully');
+
       // 2. Update streak if applicable (only for goal-related events)
       if (['vocab_created', 'journal_created', 'roleplay_completed'].includes(eventType)) {
+        console.log('[trackLearningEvent] Triggering streak update for goal-related event');
         await this.updateStreakIfGoalsSatisfied(profileId);
       }
     } catch (error) {
-      console.error('Error tracking learning event:', error);
+      console.error('[trackLearningEvent] Error tracking learning event:', error);
     }
   }
 
@@ -306,6 +315,11 @@ export class AnalyticsService {
       const supabase = await this.getSupabaseClient();
       const today = new Date().toISOString().split('T')[0];
 
+      console.log('[updateStreakIfGoalsSatisfied] Calling update_user_streak for:', {
+        profileId,
+        today
+      });
+
       // Call PostgreSQL function - single atomic operation
       const { data, error } = await (supabase as any).rpc('update_user_streak', {
         p_profile_id: profileId,
@@ -313,21 +327,30 @@ export class AnalyticsService {
       });
 
       if (error) {
-        console.error('Error calling update_user_streak:', error);
+        console.error('[updateStreakIfGoalsSatisfied] Error calling update_user_streak:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
         throw error;
       }
 
-      // Optional: Log result for debugging
+      console.log('[updateStreakIfGoalsSatisfied] Function returned:', data);
+
       if (data && data.length > 0) {
         const result = data[0];
-        console.log('Streak updated:', {
+        console.log('[updateStreakIfGoalsSatisfied] Streak updated:', {
           current_streak: result.current_streak,
           longest_streak: result.longest_streak,
           goals_met: result.goals_met
         });
+      } else {
+        console.warn('[updateStreakIfGoalsSatisfied] Function returned no data');
       }
     } catch (error) {
-      console.error('Error updating streak:', error);
+      console.error('[updateStreakIfGoalsSatisfied] Unexpected error:', error);
       throw error;
     }
   }
@@ -370,14 +393,10 @@ export class AnalyticsService {
   }
 
   /**
-   * Get daily goal statuses for a month (optimized for calendar view)
+   * Get daily goal statuses for a month (from daily_goal_completions table)
    * 
-   * Algorithm:
-   * 1. Calculate month boundaries in user's timezone
-   * 2. Parallel fetch: profile goals + month's events (DB-filtered)
-   * 3. Single-pass grouping by date with Map (O(m))
-   * 4. Convert to goal status objects (O(d) where d = days with events)
-   * Total: O(m + d) - much faster than fetching all events
+   * This is the single source of truth for daily goal completion.
+   * Much simpler and consistent with the streak system.
    */
   async getMonthlyGoalStatuses(
     profileId: string,
@@ -396,69 +415,55 @@ export class AnalyticsService {
         targetMonthString = month.toISOString().substring(0, 7);
       }
 
-      // Calculate DB query range (first to last day of month + buffer)
-      const monthStart = new Date(targetMonthString + '-01T00:00:00Z');
-      const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59);
-      const bufferStart = new Date(monthStart.getTime() - 86400000).toISOString(); // -1 day
-      const bufferEnd = new Date(monthEnd.getTime() + 86400000).toISOString();     // +1 day
+      // Get user's goals for target calculation
+      const { data: profile, error: profileError } = await (supabase as any)
+        .from('profiles')
+        .select('daily_vocab_goal, daily_roleplay_goal, daily_journal_goal')
+        .eq('id', profileId)
+        .single();
 
-      // OPTIMIZATION: Parallel fetch + DB-level date filtering
-      const [profileResult, eventsResult] = await Promise.all([
-        (supabase as any)
-          .from('profiles')
-          .select('daily_review_goal, daily_roleplay_goal, daily_journal_goal')
-          .eq('id', profileId)
-          .single(),
-        (supabase as any)
-          .from('learning_events')
-          .select('event_type, created_at')
-          .eq('profile_id', profileId)
-          .neq('event_type', 'session_active')
-          .gte('created_at', bufferStart)
-          .lte('created_at', bufferEnd)
-      ]);
+      if (profileError) throw profileError;
 
-      if (profileResult.error) throw profileResult.error;
-      if (eventsResult.error) throw eventsResult.error;
+      // Query daily_goal_completions for the month
+      // Note: We query the full month range, client will filter if needed
+      const monthStart = targetMonthString + '-01';
+      const monthEnd = targetMonthString + '-31'; // Postgres handles invalid dates
 
-      const profile = profileResult.data;
-      const eventsByDate = new Map<string, Record<string, number>>();
+      const { data: completions, error: completionsError } = await (supabase as any)
+        .from('daily_goal_completions')
+        .select('completion_date, vocab_count, journal_count, roleplay_count, all_goals_met')
+        .eq('profile_id', profileId)
+        .gte('completion_date', monthStart)
+        .lte('completion_date', monthEnd)
+        .order('completion_date', { ascending: true });
 
-      // Single-pass grouping and aggregation (O(m))
-      if (eventsResult.data?.length) {
-        for (const event of eventsResult.data) {
-          const dateKey = event.created_at.split('T')[0];
-          const eventMonthString = dateKey.substring(0, 7);
-          
-          // Client-side precision filtering
-          if (eventMonthString === targetMonthString) {
-            if (!eventsByDate.has(dateKey)) {
-              eventsByDate.set(dateKey, {});
-            }
-            const dayCounts = eventsByDate.get(dateKey)!;
-            dayCounts[event.event_type] = (dayCounts[event.event_type] || 0) + 1;
+      if (completionsError) throw completionsError;
+
+      // Convert to goal statuses Map
+      const goalStatuses = new Map<string, DailyGoalStatus>();
+
+      if (completions && completions.length > 0) {
+        for (const day of completions) {
+          // Only include days from the target month
+          if (day.completion_date.startsWith(targetMonthString)) {
+            goalStatuses.set(day.completion_date, {
+              date: day.completion_date,
+              vocab_created: {
+                completed: day.vocab_count || 0,
+                target: profile?.daily_vocab_goal || 1,
+              },
+              journal_created: {
+                completed: day.journal_count || 0,
+                target: profile?.daily_journal_goal || 1,
+              },
+              roleplay_completed: {
+                completed: day.roleplay_count || 0,
+                target: profile?.daily_roleplay_goal || 1,
+              },
+              all_goals_met: day.all_goals_met, // Include the database flag
+            });
           }
         }
-      }
-
-      // Convert to goal statuses (O(d))
-      const goalStatuses = new Map<string, DailyGoalStatus>();
-      for (const [dateKey, counts] of eventsByDate) {
-        goalStatuses.set(dateKey, {
-          date: dateKey,
-          vocab_created: {
-            completed: counts['vocab_created'] || 0,
-            target: profile?.daily_review_goal || 10,
-          },
-          journal_created: {
-            completed: counts['journal_created'] || 0,
-            target: profile?.daily_journal_goal || 1,
-          },
-          roleplay_completed: {
-            completed: counts['roleplay_completed'] || 0,
-            target: profile?.daily_roleplay_goal || 1,
-          },
-        });
       }
 
       return goalStatuses;
