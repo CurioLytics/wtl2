@@ -15,7 +15,7 @@ export async function POST(request: Request) {
         const { eventType, metadata } = body;
 
         if (!eventType) {
-            return NextResponse.json({ error: 'Event type is required' }, { status: 400 });
+            return NextResponse.json({ error: 'Event type is requiredd' }, { status: 400 });
         }
 
         await analyticsService.trackLearningEvent(user.id, eventType, metadata);
