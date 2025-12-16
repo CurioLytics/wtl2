@@ -14,10 +14,15 @@ import { HorizontalScrollList } from '@/components/ui/horizontal-scroll-list';
 
 export default function RoleplayPage() {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-  const { scenarios, loading, error } = useRoleplayScenarios(selectedTopic || undefined);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+  const { scenarios, loading, error } = useRoleplayScenarios(
+    selectedTopic || undefined,
+    selectedDifficulty || undefined
+  );
 
-  const handleFilterChange = (topic: string | null) => {
-    setSelectedTopic(topic);
+  const handleFilterChange = (filters: { topic: string | null; difficulty: string | null }) => {
+    setSelectedTopic(filters.topic);
+    setSelectedDifficulty(filters.difficulty);
   };
 
   return (
@@ -40,6 +45,7 @@ export default function RoleplayPage() {
         <ScenarioFilter
           onFilterChange={handleFilterChange}
           currentTopic={selectedTopic}
+          currentDifficulty={selectedDifficulty}
         />
         {/* Scenarios */}
         <PageContentWrapper
@@ -67,10 +73,20 @@ export default function RoleplayPage() {
             </div>
           ) : (
             <div className="text-center text-gray-600 py-8">
-              {selectedTopic ? (
+              {selectedTopic || selectedDifficulty ? (
                 <>
-                  <p className="mb-3">Không có hội thoại nào cho "{selectedTopic}".</p>
-                  <Button variant="outline" onClick={() => setSelectedTopic(null)}>
+                  <p className="mb-3">
+                    Không có hội thoại nào cho {selectedTopic && `"${selectedTopic}"`}
+                    {selectedTopic && selectedDifficulty && ' và '}
+                    {selectedDifficulty && `độ khó "${selectedDifficulty}"`}.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedTopic(null);
+                      setSelectedDifficulty(null);
+                    }}
+                  >
                     Xóa bộ lọc
                   </Button>
                 </>
