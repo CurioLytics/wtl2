@@ -17,7 +17,6 @@ export interface DailyGoalStatus {
         completed: number;
         target: number;
     };
-    all_goals_met?: boolean; // From daily_goal_completions table
 }
 
 export interface WeeklyActivityData {

@@ -418,7 +418,7 @@ export class AnalyticsService {
       // Get user's goals for target calculation
       const { data: profile, error: profileError } = await (supabase as any)
         .from('profiles')
-        .select('daily_vocab_goal, daily_roleplay_goal, daily_journal_goal')
+        .select('daily_review_goal, daily_roleplay_goal, daily_journal_goal')
         .eq('id', profileId)
         .single();
 
@@ -431,7 +431,7 @@ export class AnalyticsService {
 
       const { data: completions, error: completionsError } = await (supabase as any)
         .from('daily_goal_completions')
-        .select('completion_date, vocab_count, journal_count, roleplay_count, all_goals_met')
+        .select('completion_date, vocab_count, journal_count, roleplay_count')
         .eq('profile_id', profileId)
         .gte('completion_date', monthStart)
         .lte('completion_date', monthEnd)
@@ -450,7 +450,7 @@ export class AnalyticsService {
               date: day.completion_date,
               vocab_created: {
                 completed: day.vocab_count || 0,
-                target: profile?.daily_vocab_goal || 1,
+                target: profile?.daily_review_goal || 10,
               },
               journal_created: {
                 completed: day.journal_count || 0,
@@ -460,7 +460,6 @@ export class AnalyticsService {
                 completed: day.roleplay_count || 0,
                 target: profile?.daily_roleplay_goal || 1,
               },
-              all_goals_met: day.all_goals_met, // Include the database flag
             });
           }
         }
