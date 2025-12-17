@@ -81,7 +81,7 @@ function useJournalFeedbackDB(userId?: string) {
                 enhanced_version: result.data.enhanced_version || result.data.improvedVersion,
                 fixed_typo: result.data.fixed_typo || journal.content,
               },
-              grammarDetails: result.data.grammar_details || [],
+              grammarDetails: [], // Grammar errors will be saved later if user checks the box
             });
 
             // Set feedback data
@@ -173,6 +173,7 @@ export default function JournalFeedbackPage() {
   const [isGeneratingFlashcards, setIsGeneratingFlashcards] = useState(false);
   const [errMsg, setErrMsg] = useState<string | null>(null);
   const [editableTitle, setEditableTitle] = useState<string>('');
+  const [saveGrammarErrors, setSaveGrammarErrors] = useState(false); // Unchecked by default
 
   useEffect(() => {
     // Only redirect if auth is done loading and there's no user
@@ -204,6 +205,30 @@ export default function JournalFeedbackPage() {
       const originalContent = feedback.originalContent || feedback.fixed_typo || feedback.originalVersion || '';
       const enhancedContent = feedback.enhanced_version || feedback.improvedVersion || '';
       let resultId: string;
+
+      // Save grammar errors to database if checkbox is checked
+      if (saveGrammarErrors && feedbackId && feedback.grammar_details?.length > 0) {
+        try {
+          await feedbackLogsService.saveFeedback({
+            userId: user.id,
+            sourceId: journalId || '',
+            sourceType: 'journal',
+            feedbackData: {
+              clarity: feedback.output?.clarity,
+              vocabulary: feedback.output?.vocabulary,
+              ideas: feedback.output?.ideas,
+              enhanced_version: enhancedContent,
+              fixed_typo: originalContent,
+            },
+            grammarDetails: feedback.grammar_details,
+            replaceExisting: true, // Replace existing feedback to add grammar items
+          });
+          console.log('✅ Grammar errors saved to database');
+        } catch (err) {
+          console.error('Error saving grammar errors:', err);
+          // Don't fail the whole save if grammar save fails
+        }
+      }
 
       if (journalId) {
         // Publish draft and update content
@@ -419,7 +444,11 @@ export default function JournalFeedbackPage() {
             {/* Grammar Details */}
             <div id="grammar" className="scroll-mt-20">
               {feedback.grammar_details?.length > 0 && (
-                <GrammarDetailsSection details={feedback.grammar_details} />
+                <GrammarDetailsSection
+                  details={feedback.grammar_details}
+                  saveGrammarErrors={saveGrammarErrors}
+                  onToggleSave={setSaveGrammarErrors}
+                />
               )}
             </div>
 
@@ -448,10 +477,29 @@ export default function JournalFeedbackPage() {
   );
 }
 
-function GrammarDetailsSection({ details }: { details: GrammarDetail[] }) {
+function GrammarDetailsSection({
+  details,
+  saveGrammarErrors,
+  onToggleSave
+}: {
+  details: GrammarDetail[];
+  saveGrammarErrors: boolean;
+  onToggleSave: (checked: boolean) => void;
+}) {
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-700 mb-4">Chi tiết ngữ pháp</h3>
+      <div className="flex items-center gap-3 mb-4">
+        <h3 className="text-lg font-semibold text-gray-700">Chi tiết ngữ pháp</h3>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={saveGrammarErrors}
+            onChange={(e) => onToggleSave(e.target.checked)}
+            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+          />
+          <span className="text-sm text-gray-600">Lưu lỗi ngữ pháp</span>
+        </label>
+      </div>
       <div className="space-y-4">
         {details.map((detail, index) => (
           <Card key={index} className="hover:shadow-md transition-shadow border-0 bg-white">
