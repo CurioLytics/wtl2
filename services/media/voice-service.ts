@@ -111,14 +111,15 @@ class VoiceService {
     }
 
     this.recognition.onresult = (event: any) => {
-      // IMPORTANT: Concatenate ALL results, not just the last one
-      // Speech Recognition API returns multiple result objects as user speaks
-      // We need to combine them all to get the full transcript
+      // IMPORTANT: Only process NEW results, not all accumulated results
+      // event.resultIndex tells us where the new results start
+      // This prevents duplication when speaking multiple times
 
       let fullTranscript = '';
 
-      // Loop through all results and concatenate them
-      for (let i = 0; i < event.results.length; i++) {
+      // Start from resultIndex to only get NEW results
+      // Loop through only the new results added in this event
+      for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         const transcript = result[0].transcript;
         fullTranscript += transcript + ' ';
