@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 interface FooterLink {
@@ -9,41 +8,38 @@ interface FooterLink {
 }
 
 interface FooterProps {
-  logoSrc: string;
-  logoText: string;
+  brandName: string;
   links: FooterLink[];
 }
 
 /**
  * Footer component for the landing page
- * Contains logo, brand name, and navigation links
+ * Minimalist design with brand name, links, and copyright
  */
-export function Footer({ logoSrc, logoText, links }: FooterProps) {
+export function Footer({ brandName, links }: FooterProps) {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="bg-gray-50 px-4 py-8">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
-        <div className="flex items-center mb-4 md:mb-0">
-          <div className="relative w-8 h-8 mr-2">
-            <Image
-              src={logoSrc}
-              alt={logoText}
-              fill
-              className="object-contain"
-            />
+    <footer className="bg-gray-50 px-4 py-8 border-t border-gray-200">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <span className="text-lg font-semibold text-foreground">{brandName}</span>
+
+          <div className="flex gap-6 items-center">
+            {links.map((link, index) => (
+              <Link
+                key={index}
+                href={link.href}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {link.text}
+              </Link>
+            ))}
           </div>
-          <span className="text-lg font-semibold">{logoText}</span>
         </div>
-        
-        <div className="flex gap-6">
-          {links.map((link, index) => (
-            <Link 
-              key={index} 
-              href={link.href}
-              className="text-gray-600 hover:text-blue-600"
-            >
-              {link.text}
-            </Link>
-          ))}
+
+        <div className="text-center mt-6 text-sm text-muted-foreground">
+          © {currentYear}
         </div>
       </div>
     </footer>

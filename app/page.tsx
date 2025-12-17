@@ -1,223 +1,165 @@
-'use client';
-
-import { useResponsive } from '@/hooks/common/use-responsive';
-import { Header } from '@/components/landing/header';
-import { Hero } from '@/components/landing/hero';
-import { Section } from '@/components/landing/section';
+import { CTASection } from '@/components/landing/cta-section';
+import { ProblemSection } from '@/components/landing/problem-section';
+import { CoreIdeaSection } from '@/components/landing/core-idea-section';
+import { HowItWorksSection } from '@/components/landing/how-it-works-section';
 import { FeatureCard } from '@/components/landing/feature-card';
-import { StepItem } from '@/components/landing/step-item';
+import { TestimonialCard } from '@/components/landing/testimonial-card';
+import { TargetAudienceSection } from '@/components/landing/target-audience-section';
 import { Footer } from '@/components/landing/footer';
 
 export default function LandingPage() {
-  const { isMobile } = useResponsive();
-
-  // Pain points addressed
-  const painPoints = [
-    {
-      icon: "😓",
-      problem: "Học mãi vẫn quên từ vựng?",
-      solution: "Spaced Repetition giúp ghi nhớ lâu dài"
-    },
-    {
-      icon: "📝",
-      problem: "Không biết viết gì?",
-      solution: "Template sẵn theo từng chủ đề"
-    },
-    {
-      icon: "🗣️",
-      problem: "Thiếu cơ hội thực hành?",
-      solution: "AI Roleplay 24/7 mọi tình huống"
-    },
-    {
-      icon: "🎯",
-      problem: "Không biết mình tiến bộ chưa?",
-      solution: "Dashboard theo dõi và gợi ý bài luyện tập"
-    }
-  ];
-
-  // Core features with user benefits
-  const features = [
-    {
-      title: "Luyện giao tiếp thực tế",
-      description: "Đóng vai trong các tình huống như đi du lịch, phỏng vấn, mua sắm... Luyện phản xạ nhanh như nói với người thật.",
-      iconSrc: "/icons/language.svg",
-      benefit: "Tự tin giao tiếp + Không còn sợ nói"
-    },
-    {
-      title: "Viết và nhận phản hồi tức thì",
-      description: "Viết về bất cứ điều gì bằng tiếng Anh. AI phản hồi ngay lập tức về ngữ pháp, từ vựng và cách diễn đạt tự nhiên hơn.",
-      iconSrc: "/icons/bookmark.svg",
-      benefit: "Cải thiện viết + Tích lũy từ vựng cá nhân"
-    },
-    {
-      title: "Ôn từ vựng khoa học",
-      description: "Hệ thống nhắc nhở ôn đúng lúc sắp quên. Mỗi từ gắn với ngữ cảnh và nội dung do chính bạn tạo ra.",
-      iconSrc: "/icons/cap.svg",
-      benefit: "Nhớ lâu + Dùng từ tự nhiên"
-    },
-  ];
-
-  // How it works - simplified user flow
-  const steps = [
-    {
-      number: 1,
-      title: "Cá nhân hóa",
-      description: "Chọn mục tiêu, trình độ và phong cách học phù hợp với bạn. Chỉ 2 phút!",
-      iconSrc: "/icons/plus.svg",
-    },
-    {
-      number: 2,
-      title: "Nói & Viết",
-      description: "Luyện giao tiếp hoặc viết mỗi ngày. AI coach cá nhân luôn sẵn sàng phản hồi.",
-      iconSrc: "/icons/check.svg",
-    },
-    {
-      number: 3,
-      title: "Lưu từ hay",
-      description: "Lưu từ vựng từ nội dung do chính bạn tạo ra. Học từ có ý nghĩa, nhớ lâu hơn.",
-      iconSrc: "/icons/bookmark.svg",
-    },
-    {
-      number: 4,
-      title: "Ôn & Tiến bộ",
-      description: "Ôn tập theo lịch thông minh. Dashboard theo dõi và gợi ý bài luyện tập.",
-      iconSrc: "/icons/cap.svg",
-    },
-  ];
-
-  // Footer links
-  const footerLinks = [
-    { text: "Đăng nhập", href: "/auth" },
-    { text: "Đăng ký", href: "/auth?mode=signup" },
-    { text: "Quyền riêng tư", href: "#" },
-    { text: "Điều khoản", href: "#" },
-  ];
-
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      {/* Header */}
-      <Header
-        logoSrc="/images/logo.png"
-        logoText="W2L"
-        buttonText="Bắt đầu hành trình của bạn"
-        buttonLink="/auth?mode=signup"
-      />
-
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <Hero
-        title={
+      <CTASection
+        headline="Viết. Nói. Suy nghĩ bằng tiếng Anh – mỗi ngày."
+        subheadline={
           <>
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Write your Thoughts,</span>
-            <br />
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Learn your Words</span>
+            Write2Learn giúp bạn chuyển tiếng Anh từ{' '}
+            <span className="highlight-purple">biết</span> sang{' '}
+            <span className="highlight-purple">dùng được</span>, thông qua viết{' '}
+            <span className="highlight-purple">nhật ký</span>,{' '}
+            <span className="highlight-purple">luyện hội thoại</span> và{' '}
+            <span className="highlight-purple">ghi nhớ từ vựng</span> theo chính{' '}
+            <span className="highlight-purple">trải nghiệm</span> của bạn.
           </>
         }
-        subtitle="Luyện giao tiếp, viết và ôn từ vựng — tất cả được cá nhân hóa với AI"
-        description="Write2Learn biến mỗi lời nói và dòng chữ của bạn thành bài học tiếng Anh thực tế nhất."
-        buttonText="Bắt đầu hành trình của bạn"
-        buttonLink="/auth?mode=signup"
+        primaryButtonText="👉 Bắt đầu viết hôm nay"
+        primaryButtonLink="/journal"
+        secondaryButtonText="Xem cách hoạt động"
+        secondaryButtonLink="#how-it-works"
+        fullHeight={true}
       />
 
-      {/* Pain Points Section */}
-      <Section
-        title={<>Bạn có đang gặp những khó khăn này?</>}
-        bgColor="bg-gray-50"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {painPoints.map((item, index) => (
-            <div
-              key={index}
-              className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all"
-            >
-              <div className="flex items-start gap-4">
-                <div className="text-4xl flex-shrink-0">{item.icon}</div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{item.problem}</h3>
-                  <p className="text-sm text-blue-600">✓ {item.solution}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Section>
+      {/* Problem Awareness Section */}
+      <ProblemSection
+        headline="Bạn không thiếu kiến thức."
+        subheadline="Bạn thiếu môi trường để dùng tiếng Anh."
+        problems={[
+          'Học nhiều năm nhưng vẫn ngại viết, ngại nói',
+          'Thuộc từ nhưng không biết dùng trong câu thật',
+          'Công cụ rời rạc, học xong là quên',
+          'Không duy trì được thói quen lâu dài',
+        ]}
+      />
 
-      {/* Features Section */}
-      <Section
-        title={<>Ba cách học hiệu quả trong một ứng dụng</>}
-        bgColor="bg-white"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div key={index} className="flex flex-col">
-              <FeatureCard
-                title={feature.title}
-                description={feature.description}
-                iconSrc={feature.iconSrc}
-              />
-              <div className="mt-3 px-4">
-                <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 text-xs font-medium px-3 py-1.5 rounded-full">
-                  <span>🎯</span>
-                  <span>{feature.benefit}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Section>
+      {/* Core Idea Section */}
+      <CoreIdeaSection
+        headline="Write2Learn không dạy bạn 'học tiếng Anh'."
+        subheadline="Nó tạo điều kiện để bạn sử dụng tiếng Anh."
+        points={[
+          'Viết về chính cuộc sống của bạn',
+          'Nhận phản hồi ngay khi còn nhớ ngữ cảnh',
+          'Giữ lại những gì bạn từng dùng, từng sai, từng học',
+        ]}
+      />
 
       {/* How It Works Section */}
-      <Section
-        title={<>Hành trình học của bạn với <span className="text-black">W</span><span className="bg-gradient-to-b from-black from-50% to-blue-600 to-50% bg-clip-text text-transparent">2</span><span className="text-blue-600">L</span></>}
-        bgColor="bg-blue-50"
-      >
-        <div className="space-y-8 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-8">
-          {steps.map((step, index) => (
-            <StepItem
-              key={index}
-              number={step.number}
-              title={step.title}
-              description={step.description}
-              iconSrc={step.iconSrc}
-            />
-          ))}
-        </div>
-      </Section>
+      <div id="how-it-works">
+        <HowItWorksSection
+          headline="Cách hoạt động"
+          steps={[
+            {
+              title: 'Viết hoặc nói như bạn vẫn nghĩ',
+              description:
+                'Viết nhật ký ngắn, hoặc tham gia một tình huống giao tiếp quen thuộc (phỏng vấn, du lịch, công việc).',
+            },
+            {
+              title: 'AI phản hồi như một người hướng dẫn',
+              description:
+                'Chỉ ra lỗi, gợi ý cách diễn đạt tự nhiên hơn, không chấm điểm – không phán xét.',
+            },
+            {
+              title: 'Giữ lại từ & cấu trúc bạn vừa dùng',
+              description:
+                'Highlight ngay trong bài viết hoặc hội thoại → tạo flashcard tự động, gắn với ngữ cảnh thật.',
+            },
+            {
+              title: 'Ôn lại đúng lúc, không lãng phí thời gian',
+              description:
+                'Hệ thống nhắc bạn ôn những gì sắp quên, không phải những gì bạn đã nhớ.',
+            },
+          ]}
+          ctaText="👉 Trải nghiệm quy trình này"
+          ctaLink="/journal"
+        />
+      </div>
 
-      {/* CTA Section */}
-      <Section
-        title={<>Sẵn sàng bắt đầu?</>}
-        bgColor="bg-gradient-to-br from-blue-600 to-purple-600"
-      >
-        <div className="text-center max-w-2xl mx-auto">
-          <p className="text-xl text-white mb-8">
-            Tham gia ngay hôm nay và trải nghiệm cách học tiếng Anh khác biệt —
-            được cá nhân hóa hoàn toàn cho bạn.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <a
-              href="/auth?mode=signup"
-              className="bg-white text-blue-600 font-semibold px-8 py-4 rounded-2xl hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl"
-            >
-              Bắt đầu miễn phí
-            </a>
-            <a
-              href="/auth"
-              className="text-white font-medium px-8 py-4 rounded-2xl border-2 border-white hover:bg-white/10 transition-all"
-            >
-              Đã có tài khoản? Đăng nhập
-            </a>
+      {/* Feature Blocks Section */}
+      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <FeatureCard
+              emoji="✍️"
+              title="Journal – Viết để suy nghĩ bằng tiếng Anh"
+              description="Viết không còn là bài tập. Nó là thói quen."
+              details={[
+                'Gợi ý viết khi bí ý tưởng',
+                'Phản hồi rõ ràng: sai ở đâu, vì sao',
+                'Viết lại tốt hơn, tự nhiên hơn',
+              ]}
+            />
+            <FeatureCard
+              emoji="🗣️"
+              title="Roleplay – Luyện nói trong môi trường an toàn"
+              description="Phù hợp cho người bận rộn, cần luyện phản xạ."
+              details={[
+                'Hội thoại theo tình huống thực tế',
+                'Không sợ sai, không áp lực người đối diện',
+                'Kết thúc phiên là biết mình cần cải thiện gì',
+              ]}
+            />
+            <FeatureCard
+              emoji="🧠"
+              title="Vocabulary – Nhớ từ vì bạn đã dùng nó"
+              description="Từ vựng có ký ức → nhớ lâu hơn."
+              details={[
+                'Không học từ rời rạc',
+                'Từ vựng sinh ra từ chính bài viết & hội thoại của bạn',
+                'Ôn tập thông minh, không quá tải',
+              ]}
+            />
           </div>
-          <p className="text-sm text-white/80 mt-6">
-            ✨ Không cần thẻ tín dụng • 🚀 Thiết lập trong 2 phút
-          </p>
         </div>
-      </Section>
+      </section>
+
+      {/* Who It's For Section */}
+      <TargetAudienceSection
+        headline="Write2Learn dành cho bạn nếu:"
+        criteria={[
+          'Bạn hiểu tiếng Anh nhưng khó viết, khó nói',
+          'Bạn đi làm, ít thời gian nhưng cần dùng tiếng Anh thật',
+          'Bạn chán các app "học cho có"',
+          'Bạn muốn tiến bộ bền vững, không học vẹt',
+        ]}
+      />
+
+      {/* Social Proof Section */}
+      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <TestimonialCard quote="Mình viết mỗi ngày 10–15 phút. Sau vài tuần, mình bắt đầu nghĩ bằng tiếng Anh thay vì dịch trong đầu." />
+            <TestimonialCard quote="Roleplay là tính năng mình dùng nhiều nhất. Nó giống tập dượt trước khi ra đời thật." />
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <CTASection
+        headline="Đừng đợi đến khi 'giỏi hơn' mới bắt đầu dùng tiếng Anh. Hãy bắt đầu để trở nên 'giỏi hơn'."
+        primaryButtonText="👉 Bắt đầu với bài viết đầu tiên"
+        primaryButtonLink="/journal"
+        className="bg-white"
+      />
 
       {/* Footer */}
       <Footer
-        logoSrc="/images/logo.png"
-        logoText="Viết để Học"
-        links={footerLinks}
+        brandName="Write2Learn"
+        links={[
+          { text: 'About', href: '/about' },
+          { text: 'Privacy', href: '/privacy' },
+          { text: 'Contact', href: '/contact' },
+        ]}
       />
     </div>
   );

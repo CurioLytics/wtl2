@@ -1,37 +1,36 @@
 'use client';
 
-import Image from 'next/image';
 import { cn } from '@/utils/ui';
 
 interface FeatureCardProps {
   title: string;
   description: string;
-  iconSrc: string;
+  emoji: string;
+  details: string[];
   className?: string;
 }
 
 /**
  * FeatureCard component for displaying feature highlights on the landing page
- * Used in the "What Can You do?" section
+ * Uses emoji icons for a cleaner, more minimalist look
  */
-export function FeatureCard({ title, description, iconSrc, className }: FeatureCardProps) {
+export function FeatureCard({ title, description, emoji, details, className }: FeatureCardProps) {
   return (
     <div className={cn(
-      "bg-white rounded-lg shadow-sm p-6 flex flex-col items-center text-center",
+      "bg-white rounded-lg border border-gray-200 p-8 hover:shadow-lg transition-shadow duration-300",
       className
     )}>
-      <div className="mb-4">
-        <div className="relative w-12 h-12">
-          <Image 
-            src={iconSrc}
-            alt={title}
-            fill
-            className="object-contain"
-          />
-        </div>
-      </div>
-      <h3 className="text-xl font-medium mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
+      <div className="text-4xl mb-4">{emoji}</div>
+      <h3 className="text-2xl font-bold text-foreground mb-3">{title}</h3>
+      <p className="text-muted-foreground mb-6 italic">{description}</p>
+      <ul className="space-y-2">
+        {details.map((detail, index) => (
+          <li key={index} className="flex items-start gap-2">
+            <span className="text-muted-foreground mt-1">•</span>
+            <span className="text-foreground">{detail}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
