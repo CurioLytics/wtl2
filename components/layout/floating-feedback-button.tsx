@@ -65,18 +65,18 @@ export function FloatingFeedbackButton() {
       if (isDragging) {
         const newX = e.clientX - dragStart.x;
         const newY = e.clientY - dragStart.y;
-        
+
         // Track if we actually moved
         if (Math.abs(newX - position.x) > 5 || Math.abs(newY - position.y) > 5) {
           setHasMoved(true);
         }
-        
+
         // Constrain to viewport - use a default size if container not available
         const containerWidth = isOpen && containerRef.current ? containerRef.current.offsetWidth : 48;
         const containerHeight = isOpen && containerRef.current ? containerRef.current.offsetHeight : 48;
         const maxX = window.innerWidth - containerWidth - 24;
         const maxY = window.innerHeight - containerHeight - 24;
-        
+
         setPosition({
           x: Math.max(-window.innerWidth + containerWidth + 24, Math.min(newX, maxX)),
           y: Math.max(-24, Math.min(newY, maxY))
@@ -106,7 +106,7 @@ export function FloatingFeedbackButton() {
   const handleMouseDown = (e: React.MouseEvent) => {
     // For open dialog: Only start dragging if clicking on the header itself, not buttons
     if (isOpen && (e.target as HTMLElement).closest('button')) return;
-    
+
     e.preventDefault();
     setIsDragging(true);
     setDragStart({
@@ -241,7 +241,7 @@ export function FloatingFeedbackButton() {
     <>
       {/* Floating Button */}
       {!isOpen && (
-        <div 
+        <div
           className="fixed z-50"
           style={{
             top: `${24 + position.y}px`,
@@ -289,10 +289,10 @@ export function FloatingFeedbackButton() {
         >
           <div className="h-full bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
             {/* Header */}
-            <div 
+            <div
               className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4 flex items-center justify-between select-none"
               onMouseDown={handleMouseDown}
-              style={{ 
+              style={{
                 cursor: isDragging ? 'grabbing' : 'grab',
                 userSelect: 'none'
               }}
@@ -340,12 +340,12 @@ export function FloatingFeedbackButton() {
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button
+                    <button
                       onClick={handleSaveUserInfo}
-                      className="flex-1 h-9 text-sm"
+                      className="btn-black-primary flex-1 h-9 text-sm"
                     >
                       Oke
-                    </Button>
+                    </button>
                     <Button
                       onClick={() => setShowUserInfo(false)}
                       variant="outline"

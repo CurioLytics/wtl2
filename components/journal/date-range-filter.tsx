@@ -66,12 +66,12 @@ export function DateRangeFilter({ onDateRangeChange }: DateRangeFilterProps) {
                         />
                     </div>
                     <div className="flex gap-2 justify-end">
-                        <Button variant="outline" size="sm" onClick={handleClear}>
+                        <button onClick={handleClear} className="btn-black-outline px-4 py-2 text-sm">
                             Xóa
-                        </Button>
-                        <Button size="sm" onClick={handleApply}>
+                        </button>
+                        <button onClick={handleApply} className="btn-black-primary px-4 py-2 text-sm">
                             Áp dụng
-                        </Button>
+                        </button>
                     </div>
                 </div>
             </PopoverContent>
