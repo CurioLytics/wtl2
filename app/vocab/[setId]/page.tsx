@@ -61,7 +61,7 @@ export default function VocabularySetPage() {
 
   const loadVocabularySet = async () => {
     if (hasLoaded && vocabularySet) return; // Prevent duplicate loads
-    
+
     setIsLoading(true);
     setError(null);
 
@@ -123,7 +123,7 @@ export default function VocabularySetPage() {
   };
 
   const updateWord = (index: number, field: keyof VocabularyWord, value: string) => {
-    const updatedWords = editWords.map((word, i) => 
+    const updatedWords = editWords.map((word, i) =>
       i === index ? { ...word, [field]: value } : word
     );
     setEditWords(updatedWords);
@@ -142,23 +142,23 @@ export default function VocabularySetPage() {
 
     try {
       const newStarredStatus = await toggleVocabularyStar(wordId);
-      
+
       // Update local state
-      setVocabularyWords(prev => prev.map(word => 
-        word.id === wordId 
+      setVocabularyWords(prev => prev.map(word =>
+        word.id === wordId
           ? { ...word, is_starred: newStarredStatus }
           : word
       ));
-      
+
       // Also update edit state if in editing mode
       if (isEditing) {
-        setEditWords(prev => prev.map(word => 
-          word.id === wordId 
+        setEditWords(prev => prev.map(word =>
+          word.id === wordId
             ? { ...word, is_starred: newStarredStatus }
             : word
         ));
       }
-      
+
       toast.success(newStarredStatus ? 'Đã đánh dấu' : 'Đã bỏ đánh dấu');
     } catch (error: any) {
       console.error('Error toggling star:', error);
@@ -169,7 +169,7 @@ export default function VocabularySetPage() {
   // Change detection functions
   const hasMetadataChanged = () => {
     return editTitle.trim() !== originalEditData.title ||
-           (editDescription.trim() || '') !== (originalEditData.description || '');
+      (editDescription.trim() || '') !== (originalEditData.description || '');
   };
 
   const getChangedWords = () => {
@@ -177,9 +177,9 @@ export default function VocabularySetPage() {
       if (!editWord.id) return false; // Skip new words
       const originalWord = originalEditData.words.find(w => w.id === editWord.id);
       if (!originalWord) return false;
-      
+
       return editWord.word.trim() !== originalWord.word ||
-             editWord.meaning.trim() !== originalWord.meaning;
+        editWord.meaning.trim() !== originalWord.meaning;
     });
   };
 
@@ -230,7 +230,7 @@ export default function VocabularySetPage() {
             updated_at: new Date().toISOString()
           })
           .eq('id', word.id);
-        
+
         if (updateError) throw updateError;
       }
 
@@ -334,34 +334,36 @@ export default function VocabularySetPage() {
           <div className="mb-6 flex justify-end gap-3">
             {isEditing ? (
               <>
-                <Button
-                  variant="outline"
+                <button
+                  className="btn-blue-outline"
                   onClick={handleCancelEdit}
                   disabled={isSaving}
                 >
                   Hủy
-                </Button>
-                <Button
+                </button>
+                <button
+                  className="btn-blue-primary"
                   onClick={handleSave}
                   disabled={isSaving || !editTitle.trim()}
                 >
                   {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
-                </Button>
+                </button>
               </>
             ) : (
               <>
-                <Button
-                  variant="outline"
+                <button
+                  className="btn-blue-outline"
                   onClick={() => router.back()}
                 >
                   Quay lại
-                </Button>
-                <Button
+                </button>
+                <button
+                  className="btn-blue-primary"
                   onClick={handleReview}
                   disabled={vocabularyWords.length === 0}
                 >
                   Ôn tập flashcard
-                </Button>
+                </button>
               </>
             )}
           </div>
@@ -410,13 +412,12 @@ export default function VocabularySetPage() {
                   <div key={word.id || index} className="relative border border-gray-200 rounded-lg p-4 bg-gray-50">
                     <button
                       onClick={() => isEditing ? removeWord(index) : handleStarToggle(word.id)}
-                      className={`absolute top-2 right-2 text-lg transition-colors ${
-                        isEditing 
-                          ? 'text-gray-500 hover:text-red-600'
-                          : word.is_starred 
-                            ? 'text-yellow-500 hover:text-yellow-600' 
-                            : 'text-gray-400 hover:text-yellow-500'
-                      }`}
+                      className={`absolute top-2 right-2 text-lg transition-colors ${isEditing
+                        ? 'text-gray-500 hover:text-red-600'
+                        : word.is_starred
+                          ? 'text-yellow-500 hover:text-yellow-600'
+                          : 'text-gray-400 hover:text-yellow-500'
+                        }`}
                       aria-label={isEditing ? `Remove word ${index + 1}` : (word.is_starred ? 'Bỏ đánh dấu từ' : 'Đánh dấu từ')}
                       title={isEditing ? 'Remove word' : (word.is_starred ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích')}
                     >

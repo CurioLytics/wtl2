@@ -243,13 +243,12 @@ export default function VocabPage() {
             </PageContentWrapper>
 
             <div className="mt-8 flex justify-center">
-              <Button
-                variant='default'
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+              <button
+                className="btn-blue-primary"
                 onClick={() => router.push('/vocab/create')}
               >
                 Thêm bộ
-              </Button>
+              </button>
             </div>
           </>
         ) : (

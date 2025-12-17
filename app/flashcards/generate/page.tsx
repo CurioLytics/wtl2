@@ -230,9 +230,9 @@ export default function FlashcardCreationPage() {
           <p className="text-sm text-gray-600 mb-6">Lưu thành công.</p>
           <div className="flex justify-center gap-3">
             <Button onClick={() => router.push('/vocab')}>Đến Vocab Hub</Button>
-            <Button variant="outline" onClick={() => router.push('/flashcards/generate')}>
+            <button className="btn-blue-primary" onClick={() => router.push('/flashcards/generate')}>
               Tạo thêm
-            </Button>
+            </button>
           </div>
         </div>
       </div>

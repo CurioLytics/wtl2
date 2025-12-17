@@ -148,12 +148,12 @@ export default function ReviewPage() {
         <div className="bg-white shadow rounded-2xl p-6">
           <div className="text-center py-8">
             <p className="text-gray-500 mb-4">Chưa có từ đến hạn, bạn đọc qua danh sách nhé</p>
-            <Button
+            <button
               onClick={() => router.push("/vocab")}
-              variant="default"
+              className="btn-blue-outline"
             >
               Quay lại vocab
-            </Button>
+            </button>
           </div>
         </div>
       </div>
@@ -172,11 +172,12 @@ export default function ReviewPage() {
               ✕
             </button>
           </div>
-          <Button
+          <button
             onClick={() => router.push("/vocab")}
+            className="btn-blue-outline"
           >
             Quay lại vocab
-          </Button>
+          </button>
         </div>
       </div>
     );

@@ -154,13 +154,13 @@ export function AuthForm() {
           </div>
         )}
 
-        <Button
+        <button
           type="submit"
-          className="w-full mobile-btn tap-highlight-none py-6 sm:py-4 text-base"
+          className="btn-black-primary w-full mobile-btn tap-highlight-none py-6 sm:py-4 text-base"
           disabled={loading}
         >
           {loading ? 'Đang xử lý...' : mode === 'signin' ? 'Đăng nhập' : 'Đăng ký'}
-        </Button>
+        </button>
       </form>
 
       <div className="relative py-2">

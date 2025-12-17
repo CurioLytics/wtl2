@@ -18,7 +18,7 @@ interface HeaderProps {
  */
 export function Header({ logoSrc, logoText, buttonText, buttonLink }: HeaderProps) {
   const router = useRouter();
-  
+
   return (
     <header className="px-4 py-4 flex justify-between items-center bg-white">
       <div className="flex items-center">
@@ -37,12 +37,12 @@ export function Header({ logoSrc, logoText, buttonText, buttonLink }: HeaderProp
         <Link href="/auth" className="text-gray-600 hover:text-blue-600 font-medium">
           Đăng nhập
         </Link>
-        <Button 
+        <button
           onClick={() => router.push(buttonLink)}
-          size="sm"
+          className="btn-black-primary"
         >
           Đăng ký
-        </Button>
+        </button>
       </div>
     </header>
   );

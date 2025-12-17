@@ -96,13 +96,12 @@ export default function ResetPasswordPage() {
             <p className="text-red-600 text-sm sm:text-base">
               {error}
             </p>
-            <Button
+            <button
               onClick={() => router.push('/auth/forgot-password')}
-              variant="outline"
-              className="w-full"
+              className="btn-black-outline w-full"
             >
               Gửi lại link đặt lại mật khẩu
-            </Button>
+            </button>
           </div>
         </div>
       </div>
@@ -123,12 +122,12 @@ export default function ResetPasswordPage() {
               Mật khẩu của bạn đã được đổi thành công.
               Bạn có thể đăng nhập với mật khẩu mới.
             </p>
-            <Button
+            <button
               onClick={() => router.push('/auth')}
-              className="w-full"
+              className="btn-black-primary w-full"
             >
               Đăng nhập
-            </Button>
+            </button>
           </div>
         </div>
       </div>
@@ -202,13 +201,13 @@ export default function ResetPasswordPage() {
             </div>
           )}
 
-          <Button
+          <button
             type="submit"
-            className="w-full mobile-btn tap-highlight-none py-6 sm:py-4 text-base"
+            className="btn-black-primary w-full mobile-btn tap-highlight-none py-6 sm:py-4 text-base"
             disabled={loading}
           >
             {loading ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
-          </Button>
+          </button>
         </form>
       </div>
     </div>

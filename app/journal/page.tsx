@@ -181,9 +181,9 @@ export default function JournalPage() {
         <div className="space-y-6">
           {/* Action Button Row */}
           <div className="flex justify-end">
-            <Button onClick={() => router.push('/journal/new')} variant="default">
+            <button onClick={() => router.push('/journal/new')} className="btn-black-primary">
               Viết mới
-            </Button>
+            </button>
           </div>
 
           {/* Search and Filter Row */}

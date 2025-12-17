@@ -86,16 +86,7 @@ export function BreathingLoader({
       {/* Main message */}
       <p className="text-base text-gray-600 mb-2">{message}</p>
 
-      {/* Breathing instruction text above bubble */}
-      <p
-        className={cn(
-          'font-medium transition-opacity duration-500 mb-2',
-          textColor
-        )}
-        aria-live="polite"
-      >
-        {isBreathingIn ? 'hít vào' : 'thở ra'}
-      </p>
+
 
       {/* Breathing bubble with smooth transition */}
       <div

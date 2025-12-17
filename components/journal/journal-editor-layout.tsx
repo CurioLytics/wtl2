@@ -86,7 +86,7 @@ export function JournalEditorLayout({
               onTagsChange={onTagsChange}
               onDelete={onDelete}
             />
-            <Button onClick={onSave} variant="outline" disabled={!hasContent || isSaving || isGettingFeedback}>
+            <button onClick={onSave} className="btn-black-outline" disabled={!hasContent || isSaving || isGettingFeedback}>
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -95,10 +95,10 @@ export function JournalEditorLayout({
               ) : (
                 'Lưu'
               )}
-            </Button>
-            <Button onClick={onGetFeedback} variant="default" disabled={!hasContent || !content || !title || isSaving || isGettingFeedback}>
-              Phân tích tiếng Anh
-            </Button>
+            </button>
+            <button onClick={onGetFeedback} className="btn-black-primary" disabled={!hasContent || !content || !title || isSaving || isGettingFeedback}>
+              Phân tích
+            </button>
           </div>
         </div>
 

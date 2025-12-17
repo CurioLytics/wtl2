@@ -30,16 +30,15 @@ export function Hero({ title, subtitle, description, buttonText, buttonLink }: H
           <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-10">
             {description}
           </p>
-          <Button
+          <button
             onClick={() => router.push(buttonLink)}
-            size="lg"
-            className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 group px-8 py-6 text-base font-semibold"
+            className="btn-black-primary px-8 py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
           >
-            <span className="relative z-10 flex items-center gap-2">
+            <span className="flex items-center gap-2">
               {buttonText}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 transform group-hover:translate-x-1 transition-transform duration-300"
+                className="h-5 w-5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -47,8 +46,7 @@ export function Hero({ title, subtitle, description, buttonText, buttonLink }: H
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </span>
-            <span className="absolute inset-0 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
-          </Button>
+          </button>
         </div>
       </div>
     </section>

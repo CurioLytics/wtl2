@@ -38,20 +38,19 @@ export default function ForgotPasswordPage() {
           <div className="text-center">
             <LogoImage />
           </div>
-          
+
           <div className="text-center space-y-4">
             <h2 className="text-xl sm:text-2xl font-bold">Email đã được gửi</h2>
             <p className="text-gray-600 text-sm sm:text-base">
-              Chúng tôi đã gửi link đặt lại mật khẩu đến <strong>{email}</strong>. 
+              Chúng tôi đã gửi link đặt lại mật khẩu đến <strong>{email}</strong>.
               Vui lòng kiểm tra email của bạn và làm theo hướng dẫn.
             </p>
-            <Button
+            <button
               onClick={() => router.push('/auth')}
-              variant="outline"
-              className="w-full"
+              className="btn-black-outline w-full"
             >
               Quay lại đăng nhập
-            </Button>
+            </button>
           </div>
         </div>
       </div>
@@ -64,7 +63,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center">
           <LogoImage />
         </div>
-        
+
         <div className="text-center">
           <h2 className="text-xl sm:text-2xl font-bold">Quên mật khẩu</h2>
           <p className="text-gray-600 mt-2 text-sm sm:text-base">
@@ -94,12 +93,13 @@ export default function ForgotPasswordPage() {
             </div>
           )}
 
-          <Button
+          <button
             type="submit"
             disabled={loading}
+            className="btn-black-primary w-full"
           >
             {loading ? 'Đang gửi...' : 'Gửi link đặt lại mật khẩu'}
-          </Button>
+          </button>
         </form>
 
         <div className="text-center">
