@@ -29,22 +29,22 @@ export async function saveOnboardingData(userId: string, data: OnboardingData) {
     {
       profile_id: userId,
       name: 'Morning Intentions',
-      content: 'What is on your mind right now that you need to clear before you start the day?\nWhat is the one thing you want to get done today, and why?\nWhat is the emotional state or mindset you want to embody today?',
+      content: 'How are you feeling this morning?\nWhat are you grateful for?\nWhat are the priorities of the week? How are they going? \nWhat\'s today\'s adventure going to be? In Calendar yet?',
       category: 'Custom',
-      description: null,
+      description: 'This framework to set the tone for the day by setting the mental state and the task need to be done',
       source: null,
-      cover_image: 'https://eqhldzwiymtcyxyxezos.supabase.co/storage/v1/object/public/w2l/morning.jpg',
+      cover_image: 'https://eqhldzwiymtcyxyxezos.supabase.co/storage/v1/object/public/w2l/evening.jpg',
       is_default: true,
       is_pinned: false
     },
     {
       profile_id: userId,
       name: 'Evening Wind-Down',
-      content: 'What is your one win from the day?\n\n\nWhat is your one point of tension, anxiety, or stress from the day?\n\n\nWhat is your one point of gratitude from the day?',
+      content: 'What is your one win from the day?\nWhat is your one point of tension, anxiety, or stress from the day?\nWhat is your one point of gratitude from the day?\nHave a nice sleep',
       category: 'Custom',
-      description: null,
-      source: null,
-      cover_image: 'https://eqhldzwiymtcyxyxezos.supabase.co/storage/v1/object/public/w2l/evening.jpg',
+      description: '',
+      source: '',
+      cover_image: 'https://eqhldzwiymtcyxyxezos.supabase.co/storage/v1/object/public/w2l/morning.jpg',
       is_default: true,
       is_pinned: false
     }
