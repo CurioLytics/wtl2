@@ -27,13 +27,13 @@ export function MobileHeader() {
   if (!isMobile) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center z-40">
+    <div className="absolute top-0 left-0 right-0 bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center z-40">
       <Link href="/home">
         <h1 className="text-lg cursor-pointer hover:opacity-80 transition-opacity">
           <BrandedText variant="full" />
         </h1>
       </Link>
-      
+
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
           {user ? (
@@ -49,19 +49,19 @@ export function MobileHeader() {
             </Link>
           )}
         </SheetTrigger>
-        
+
         {user && (
           <SheetContent side="right" className="w-80">
             <SheetHeader>
               <SheetTitle>Profile</SheetTitle>
             </SheetHeader>
-            
+
             <div className="mt-6 space-y-4">
               {/* User Info */}
               <div className="pb-4 border-b border-gray-200">
                 <UserProfileDisplay />
               </div>
-              
+
               {/* Menu Items */}
               <div className="space-y-1">
                 <Link
@@ -72,7 +72,7 @@ export function MobileHeader() {
                   <Settings size={20} />
                   <span>Cá nhân hóa</span>
                 </Link>
-                
+
                 <Link
                   href="/account"
                   className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
@@ -81,7 +81,7 @@ export function MobileHeader() {
                   <User size={20} />
                   <span>Tài khoản</span>
                 </Link>
-                
+
                 <Link
                   href="/feedback"
                   className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
@@ -91,7 +91,7 @@ export function MobileHeader() {
                   <span>Feedback</span>
                 </Link>
               </div>
-              
+
               {/* Logout */}
               <div className="pt-4 border-t border-gray-200">
                 <button

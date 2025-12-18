@@ -242,7 +242,7 @@ export function FloatingFeedbackButton() {
       {/* Floating Button */}
       {!isOpen && (
         <div
-          className="fixed z-50"
+          className="fixed z-50 hidden md:block"
           style={{
             top: `${24 + position.y}px`,
             right: `${24 - position.x}px`,
@@ -278,7 +278,7 @@ export function FloatingFeedbackButton() {
       {isOpen && (
         <div
           ref={containerRef}
-          className="fixed z-50 w-full max-w-[calc(100vw-3rem)] sm:w-96"
+          className="fixed z-50 w-full max-w-[calc(100vw-3rem)] sm:w-96 hidden md:block"
           style={{
             top: `${24 + position.y}px`,
             right: `${24 - position.x}px`,
