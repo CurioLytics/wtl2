@@ -135,7 +135,7 @@ export function useVoiceInput(onTranscript: (text: string, isFinal: boolean) => 
     const newLang = language === 'vi-VN' ? 'en-US' : 'vi-VN';
     setLanguage(newLang);
     voiceService.setLanguage(newLang);
-    
+
     // Restart if currently listening
     if (isListening) {
       voiceService.stopListening();
