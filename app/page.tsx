@@ -12,7 +12,13 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <CTASection
-        headline="Viết. Nói. Suy nghĩ bằng tiếng Anh – mỗi ngày."
+        headline={
+          <>
+            <span className="highlight-purple">Viết</span>.{' '}
+            <span className="highlight-purple">Nói</span>.{' '}
+            <span className="highlight-purple">Suy nghĩ</span> bằng tiếng Anh – mỗi ngày.
+          </>
+        }
         subheadline={
           <>
             Write2Learn giúp bạn chuyển tiếng Anh từ{' '}
@@ -34,7 +40,11 @@ export default function LandingPage() {
       {/* Problem Awareness Section */}
       <ProblemSection
         headline="Bạn không thiếu kiến thức."
-        subheadline="Bạn thiếu môi trường để dùng tiếng Anh."
+        subheadline={
+          <>
+            Bạn thiếu <span className="highlight-purple">môi trường</span> để dùng tiếng Anh.
+          </>
+        }
         problems={[
           'Học nhiều năm nhưng vẫn ngại viết, ngại nói',
           'Thuộc từ nhưng không biết dùng trong câu thật',
@@ -46,7 +56,11 @@ export default function LandingPage() {
       {/* Core Idea Section */}
       <CoreIdeaSection
         headline="Write2Learn không dạy bạn 'học tiếng Anh'."
-        subheadline="Nó tạo điều kiện để bạn sử dụng tiếng Anh."
+        subheadline={
+          <>
+            Nó tạo điều kiện để bạn <span className="highlight-purple">sử dụng</span> tiếng Anh.
+          </>
+        }
         points={[
           'Viết về chính cuộc sống của bạn',
           'Nhận phản hồi ngay khi còn nhớ ngữ cảnh',
@@ -92,7 +106,11 @@ export default function LandingPage() {
             <FeatureCard
               emoji="✍️"
               title="Journal – Viết để suy nghĩ bằng tiếng Anh"
-              description="Viết không còn là bài tập. Nó là thói quen."
+              description={
+                <>
+                  Viết không còn là bài tập. Nó là <span className="highlight-purple">thói quen</span>.
+                </>
+              }
               details={[
                 'Gợi ý viết khi bí ý tưởng',
                 'Phản hồi rõ ràng: sai ở đâu, vì sao',
@@ -102,7 +120,11 @@ export default function LandingPage() {
             <FeatureCard
               emoji="🗣️"
               title="Roleplay – Luyện nói trong môi trường an toàn"
-              description="Phù hợp cho người bận rộn, cần luyện phản xạ."
+              description={
+                <>
+                  Phù hợp cho người bận rộn, cần luyện <span className="highlight-purple">phản xạ</span>.
+                </>
+              }
               details={[
                 'Hội thoại theo tình huống thực tế',
                 'Không sợ sai, không áp lực người đối diện',
@@ -112,7 +134,11 @@ export default function LandingPage() {
             <FeatureCard
               emoji="🧠"
               title="Vocabulary – Nhớ từ vì bạn đã dùng nó"
-              description="Từ vựng có ký ức → nhớ lâu hơn."
+              description={
+                <>
+                  Từ vựng có <span className="highlight-purple">ký ức</span> → nhớ lâu hơn.
+                </>
+              }
               details={[
                 'Không học từ rời rạc',
                 'Từ vựng sinh ra từ chính bài viết & hội thoại của bạn',
@@ -130,7 +156,9 @@ export default function LandingPage() {
           'Bạn hiểu tiếng Anh nhưng khó viết, khó nói',
           'Bạn đi làm, ít thời gian nhưng cần dùng tiếng Anh thật',
           'Bạn chán các app "học cho có"',
-          'Bạn muốn tiến bộ bền vững, không học vẹt',
+          <>
+            Bạn muốn <span className="highlight-purple">tiến bộ bền vững</span>, không học vẹt
+          </>,
         ]}
       />
 
@@ -138,15 +166,27 @@ export default function LandingPage() {
       <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <TestimonialCard quote="Mình viết mỗi ngày 10–15 phút. Sau vài tuần, mình bắt đầu nghĩ bằng tiếng Anh thay vì dịch trong đầu." />
-            <TestimonialCard quote="Roleplay là tính năng mình dùng nhiều nhất. Nó giống tập dượt trước khi ra đời thật." />
+            <TestimonialCard quote={
+              <>
+                Mình viết mỗi ngày 10–15 phút. Sau vài tuần, mình bắt đầu <span className="highlight-purple">nghĩ bằng tiếng Anh</span> thay vì dịch trong đầu.
+              </>
+            } />
+            <TestimonialCard quote={
+              <>
+                Roleplay là tính năng mình dùng nhiều nhất. Nó giống <span className="highlight-purple">tập dượt</span> trước khi ra đời thật.
+              </>
+            } />
           </div>
         </div>
       </section>
 
       {/* Final CTA Section */}
       <CTASection
-        headline="Đừng đợi đến khi 'giỏi hơn' mới bắt đầu dùng tiếng Anh. Hãy bắt đầu để trở nên 'giỏi hơn'."
+        headline={
+          <>
+            Đừng đợi đến khi 'giỏi hơn' mới bắt đầu dùng tiếng Anh. Hãy bắt đầu để trở nên '<span className="highlight-purple">giỏi hơn</span>'.
+          </>
+        }
         primaryButtonText="👉 Bắt đầu với bài viết đầu tiên"
         primaryButtonLink="/journal"
         className="bg-white"

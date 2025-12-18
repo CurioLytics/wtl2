@@ -617,12 +617,8 @@ html {
   cursor: not-allowed;
 }
 
-/* Purple Highlight for Premium Keywords */
+/* Purple Text for Premium Keywords */
 .highlight-purple {
-  background-color: var(--primary-purple) !important;
-  color: white !important;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-  display: inline-block;
+  color: var(--primary-purple) !important;
   font-weight: 500;
 }

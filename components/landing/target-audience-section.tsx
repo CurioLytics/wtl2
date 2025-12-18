@@ -1,8 +1,10 @@
 'use client';
 
+import { ReactNode } from 'react';
+
 interface TargetAudienceSectionProps {
     headline: string;
-    criteria: string[];
+    criteria: ReactNode[];
 }
 
 /**

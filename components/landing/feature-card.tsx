@@ -1,10 +1,11 @@
 'use client';
 
+import { ReactNode } from 'react';
 import { cn } from '@/utils/ui';
 
 interface FeatureCardProps {
   title: string;
-  description: string;
+  description: ReactNode;
   emoji: string;
   details: string[];
   className?: string;

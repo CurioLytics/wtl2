@@ -1,8 +1,10 @@
 'use client';
 
+import { ReactNode } from 'react';
+
 interface ProblemSectionProps {
-    headline: string;
-    subheadline: string;
+    headline: ReactNode;
+    subheadline: ReactNode;
     problems: string[];
 }
 

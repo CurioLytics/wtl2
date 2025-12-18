@@ -1,7 +1,9 @@
 'use client';
 
+import { ReactNode } from 'react';
+
 interface TestimonialCardProps {
-    quote: string;
+    quote: ReactNode;
     className?: string;
 }
 
