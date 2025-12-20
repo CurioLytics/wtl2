@@ -283,7 +283,7 @@ export default function JournalPage() {
             </PopoverContent>
           </Popover>
         </div>
-        <p className="text-center text-gray-600 mb-6">Khám phá các framework để trải nghiệm nhiều khía cạnh trong nhật k</p>
+        <p className="text-center text-gray-600 mb-6">Khám phá các framework để trải nghiệm nhiều khía cạnh giúp phân tích toàn diện vấn đề</p>
         <ExploreFrameworks />
       </div>
 
